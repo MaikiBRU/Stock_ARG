@@ -1,0 +1,27 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Entorno y secretos
+.env
+email.env
+client_secret.json
+
+# Sesiones/estado
+sesion.json
+window_state.json
+
+# Logs
+logs/
+Logs/
+
+# Build/packaging
+build/
+dist/
+release/
+*.spec
+*.zip
+
+# Editor
+.vscode/

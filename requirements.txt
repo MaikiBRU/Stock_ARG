@@ -1,0 +1,5 @@
+mysql-connector-python
+pillow
+bcrypt
+requests
+google-auth-oauthlib
