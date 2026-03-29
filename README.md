@@ -1,63 +1,79 @@
 # StockARG
 
-Sistema de gestión de stock, ventas y clientes con interfaz moderna en Tkinter.
+Sistema de gestion de stock, ventas y clientes con UI en Tkinter y base MySQL.
 
-## Funcionalidades principales
-- Login con email/contraseña y opción Google (si está configurado).
-- ABM de Clientes, Proveedores y Productos.
-- Ventas con control de stock y precios (auto y editable).
-- Módulo de Stock con alertas por niveles y movimientos.
-- Reportes y exportación a CSV/PDF.
-- Panel de estado con logs del sistema.
+## Que resuelve
+- Unifica stock, ventas y clientes para reducir errores de planillas.
+- Da trazabilidad de movimientos y reportes para control diario.
 
-## Requisitos
-- Python 3.12+ (recomendado 3.13/3.14)
+## Stack
+- Python 3.12+
+- Tkinter
 - MySQL 8+
 
-Dependencias:
-```
-pip install -r requirements.txt
-```
-Opcional para PDF:
-```
-pip install -r requirements-optional.txt
-```
+## Modulos
+- Login (email + Google opcional)
+- Clientes / Proveedores / Productos
+- Ventas + DetalleVenta
+- Movimientos de stock
+- Reportes CSV/PDF
+- Panel de estado
 
-## Configuración de base de datos
-1. Crear la base de datos y usuario en MySQL.
+## Arquitectura
+- UI (Tkinter)
+- Logica de negocio
+- Persistencia (MySQL)
+- Migraciones SQL en `db_migrations/`
+
+## Modelo de datos
+Ver diagrama: `docs/StockARG-ERD.svg`
+
+![ERD](docs/StockARG-ERD.svg)
+
+Entidades principales:
+- Clientes
+- Proveedores
+- Productos
+- Ventas
+- DetalleVenta
+- MovimientosStock
+- Usuarios
+
+## Reglas de integridad
+- No permitir venta con stock insuficiente.
+- Validar cantidades y precios positivos.
+- Evitar duplicados de productos/codigos.
+- Registrar movimientos por alta/venta/ajuste.
+
+## Edge cases cubiertos
+- Bloqueo de venta sin stock.
+- Control de duplicados.
+- Manejo de errores en exportacion.
+
+## Instalacion
+1. Crear BD MySQL y usuario.
 2. Configurar credenciales en `Conexion.py`.
-3. Ejecutar migraciones SQL ubicadas en `db_migrations/`:
-   - `001_audit_and_indexes.sql` (si aplica en tu DB)
-   - `002_movimientos_stock.sql`
+3. Ejecutar migraciones en `db_migrations/`.
+4. `pip install -r requirements.txt`
+5. `python Main.py`
 
-## Configuración de correo y Google Login
-- `email.env`: credenciales de envío de email (no subir a GitHub).
-- `client_secret.json`: credenciales OAuth de Google (no subir a GitHub).
+## PDF (opcional)
+`pip install -r requirements-optional.txt`
 
-Se incluyen plantillas/ejemplos:
-- `.env.example`
+## Testing (opcional)
+`pip install -r requirements-dev.txt`
 
-## Ejecutar la app
-```
-python Main.py
-```
+`pytest -q`
 
-## Empaquetado (Windows)
-Instalar PyInstaller:
-```
-pip install pyinstaller
-```
+## Capturas
+![StockARG](Assets/StockARG%20imagen.png)
+![Stock](Assets/stock.png)
 
-Comando de build:
-```
-pyinstaller --noconsole --onefile --name StockARG Main.py --add-data "Assets;Assets"
-```
+## Roadmap corto
+- Roles y permisos.
+- Auditoria de movimientos.
+- Importacion CSV masiva.
+- Tests basicos de validacion.
 
-Nota: si usás Google Login o email, agregá los archivos en el build local, pero no los subas al repo.
-
-
-## Estructura
-- `Main.py`: entrada principal
-- `Menu.py`: navegación y vistas
-- `Productos.py` / `Clientes.py` / `Proveedores.py` / `Ventas.py` / `Stock.py`
-- `db_migrations/`: SQL de migraciones
+## Notas de seguridad
+No subir `email.env` ni `client_secret.json`.

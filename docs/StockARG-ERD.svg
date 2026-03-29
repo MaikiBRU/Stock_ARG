@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700">
+  <defs>
+    <style>
+      .bg { fill: #0f1622; }
+      .card { fill: #121b27; stroke: #5aa6ff; stroke-width: 2; rx: 14; }
+      .title { fill: #e6edf5; font-family: 'Space Grotesk', 'Segoe UI', sans-serif; font-size: 22px; font-weight: 600; }
+      .label { fill: #e6edf5; font-family: 'Manrope', 'Segoe UI', sans-serif; font-size: 16px; font-weight: 600; }
+      .muted { fill: #9fb3c8; font-family: 'Manrope', 'Segoe UI', sans-serif; font-size: 13px; }
+      .line { stroke: #7bd3ff; stroke-width: 2; opacity: 0.7; }
+    </style>
+  </defs>
+  <rect class="bg" x="0" y="0" width="1200" height="700" />
+
+  <text class="title" x="40" y="46">StockARG · Modelo de datos (resumen conceptual)</text>
+
+  <rect class="card" x="60" y="120" width="220" height="110" />
+  <text class="label" x="80" y="155">Usuarios</text>
+  <text class="muted" x="80" y="180">login, roles, estado</text>
+
+  <rect class="card" x="60" y="300" width="220" height="110" />
+  <text class="label" x="80" y="335">Clientes</text>
+  <text class="muted" x="80" y="360">datos, contacto</text>
+
+  <rect class="card" x="60" y="480" width="220" height="110" />
+  <text class="label" x="80" y="515">Proveedores</text>
+  <text class="muted" x="80" y="540">datos, contacto</text>
+
+  <rect class="card" x="470" y="120" width="240" height="120" />
+  <text class="label" x="490" y="155">Productos</text>
+  <text class="muted" x="490" y="180">stock, precio, categoria</text>
+
+  <rect class="card" x="470" y="300" width="240" height="120" />
+  <text class="label" x="490" y="335">MovimientosStock</text>
+  <text class="muted" x="490" y="360">tipo, cantidad, fecha</text>
+
+  <rect class="card" x="870" y="220" width="240" height="120" />
+  <text class="label" x="890" y="255">Ventas</text>
+  <text class="muted" x="890" y="280">fecha, total, cliente</text>
+
+  <rect class="card" x="870" y="380" width="240" height="120" />
+  <text class="label" x="890" y="415">DetalleVenta</text>
+  <text class="muted" x="890" y="440">producto, cantidad, precio</text>
+
+  <line class="line" x1="280" y1="355" x2="470" y2="355" />
+  <line class="line" x1="280" y1="535" x2="470" y2="180" />
+  <line class="line" x1="710" y1="180" x2="870" y2="260" />
+  <line class="line" x1="710" y1="360" x2="870" y2="420" />
+  <line class="line" x1="710" y1="360" x2="870" y2="260" />
+  <line class="line" x1="710" y1="180" x2="470" y2="360" />
+  <line class="line" x1="280" y1="160" x2="470" y2="160" />
+
+  <text class="muted" x="60" y="650">Nota: diagrama conceptual para explicar entidades y relaciones principales.</text>
+</svg>
