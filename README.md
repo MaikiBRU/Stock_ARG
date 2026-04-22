@@ -14,7 +14,7 @@ Sistema de gestion de stock, ventas y clientes con UI en Tkinter y base MySQL.
 ## Modulos
 - Login (email + Google opcional)
 - Clientes / Proveedores / Productos
-- Ventas + DetalleVenta
+- Ventas + Detalle de Venta
 - Movimientos de stock
 - Reportes CSV/PDF
 - Panel de estado
