@@ -65,15 +65,9 @@ Entidades principales:
 
 `pytest -q`
 
-## Capturas
-![StockARG](Assets/StockARG%20imagen.png)
-![Stock](Assets/stock.png)
-
 ## Roadmap corto
 - Roles y permisos.
 - Auditoria de movimientos.
 - Importacion CSV masiva.
 - Tests basicos de validacion.
 
-## Notas de seguridad
-No subir `email.env` ni `client_secret.json`.
