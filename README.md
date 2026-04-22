@@ -7,9 +7,9 @@ Sistema de gestion de stock, ventas y clientes con UI en Tkinter y base MySQL.
 - Da trazabilidad de movimientos y reportes para control diario.
 
 ## Stack
-- Python 3.12+
+- Python 
 - Tkinter
-- MySQL 8+
+- MySQL 
 
 ## Modulos
 - Login (email + Google opcional)
