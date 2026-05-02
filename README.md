@@ -25,11 +25,6 @@ Sistema de gestion de stock, ventas y clientes con UI en Tkinter y base MySQL.
 - Persistencia (MySQL)
 - Migraciones SQL en `db_migrations/`
 
-## Modelo de datos
-Ver diagrama: `docs/StockARG-ERD.svg`
-
-![ERD](docs/StockARG-ERD.svg)
-
 Entidades principales:
 - Clientes
 - Proveedores
