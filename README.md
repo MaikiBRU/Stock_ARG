@@ -2,11 +2,8 @@
 
 Sistema de gestión de stock, ventas, clientes y proveedores para un comercio.
 
-> **Versión 2.** StockARG nació como aplicación de escritorio en Python y
-> Tkinter sobre MySQL. Esta rama la reconstruye como aplicación web, con el
-> modelo de datos corregido y una demo pública para probarla sin instalar
-> nada. La versión de escritorio sigue disponible en el tag
-> [`v1.0-desktop`](../../releases/tag/v1.0-desktop).
+> Segunda versión del proyecto: nació como aplicación de escritorio y hoy es
+> una aplicación web, con una demo pública para probarla sin instalar nada.
 
 ## Qué resuelve
 
@@ -14,21 +11,6 @@ Nació del problema real de controlar mercadería con planillas separadas: los
 productos en una, las ventas en otra, y ninguna forma de saber qué pasó con el
 stock entre ayer y hoy. Unifica las cuatro cosas y deja traza de cada
 movimiento.
-
-## Qué cambió respecto de la versión de escritorio
-
-| Versión 1 (escritorio) | Versión 2 (web) |
-| --- | --- |
-| Una venta equivalía a un producto | Ticket con varios productos, total y medio de pago |
-| Los clientes no se vinculaban a las ventas | Cliente opcional en cada venta, con su historial |
-| Borrar un producto eliminaba sus ventas | Baja lógica: el historial no se destruye |
-| Clientes y proveedores con tres campos | Documento o CUIT, contacto y dirección |
-| Sin claves foráneas ni restricciones | Integridad declarada en la base |
-| Descuento de stock sin transacción | Transacción con bloqueo de fila |
-
-Se mantienen la identidad visual, el estado de stock por nivel sobre el stock
-inicial, el bloqueo por intentos fallidos, la exportación a CSV y PDF, la
-importación masiva y el panel de logs.
 
 ## Stack
 
