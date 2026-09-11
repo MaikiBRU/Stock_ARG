@@ -32,7 +32,7 @@ def _sandbox_poblado(db, ident="sesion-a"):
     db.commit()
 
     usuario = Usuario(
-        email="demo@stockarg.test", nombre="Demo", id_sesion_demo=ident
+        email="demo@stockarg.com.ar", nombre="Demo", id_sesion_demo=ident
     )
     medio = MedioPago(nombre="Efectivo", es_efectivo=True, id_sesion_demo=ident)
     producto = Producto(nombre="Alfajor", stock_actual=9, id_sesion_demo=ident)

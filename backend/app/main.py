@@ -7,7 +7,7 @@ las pruebas la monten sin abrir un puerto.
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import salud
+from app.api.routes import auth, salud
 from app.core.config import get_settings
 
 
@@ -38,6 +38,7 @@ def crear_app() -> FastAPI:
     )
 
     app.include_router(salud.router)
+    app.include_router(auth.router)
 
     return app
 

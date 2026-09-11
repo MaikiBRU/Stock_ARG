@@ -17,11 +17,13 @@ from app.models.inventario import (
 from app.models.producto import Producto
 from app.models.usuario import Rol, Usuario
 from app.models.venta import EstadoVenta, Venta, VentaItem
+from app.models.verificacion import CodigoUnico, TipoCodigo
 
 __all__ = [
     "Auditoria",
     "BajaProducto",
     "Categoria",
+    "CodigoUnico",
     "Cliente",
     "Compra",
     "CompraItem",
@@ -33,6 +35,7 @@ __all__ = [
     "Proveedor",
     "Rol",
     "SesionDemo",
+    "TipoCodigo",
     "TipoMovimiento",
     "Usuario",
     "Venta",

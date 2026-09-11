@@ -33,7 +33,7 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 # B008 marca Depends() en un argumento por defecto. Es exactamente
 # como FastAPI declara sus dependencias, asi que no aplica aca.
-"backend/app/api/routes/*" = ["B008"]
+"backend/app/api/*" = ["B008"]
 "backend/tests/*" = ["D"]
 "backend/alembic/env.py" = ["D"]
 

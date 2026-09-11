@@ -26,9 +26,9 @@ def _sesion(db, ident):
 
 
 def test_la_app_no_admite_dos_veces_el_mismo_email(db):
-    db.add(_usuario("ana@stockarg.test", "Ana"))
+    db.add(_usuario("ana@stockarg.com.ar", "Ana"))
     db.commit()
-    db.add(_usuario("ana@stockarg.test", "Otra Ana"))
+    db.add(_usuario("ana@stockarg.com.ar", "Otra Ana"))
 
     with pytest.raises(IntegrityError):
         db.commit()
@@ -38,8 +38,8 @@ def test_dos_sandboxes_pueden_sembrar_el_mismo_email(db):
     _sesion(db, "sesion-a")
     _sesion(db, "sesion-b")
 
-    db.add(_usuario("demo@stockarg.test", "A", "sesion-a"))
-    db.add(_usuario("demo@stockarg.test", "B", "sesion-b"))
+    db.add(_usuario("demo@stockarg.com.ar", "A", "sesion-a"))
+    db.add(_usuario("demo@stockarg.com.ar", "B", "sesion-b"))
     db.commit()
 
     assert db.query(Usuario).count() == 2
@@ -47,9 +47,9 @@ def test_dos_sandboxes_pueden_sembrar_el_mismo_email(db):
 
 def test_un_sandbox_no_admite_dos_veces_el_mismo_email(db):
     _sesion(db, "sesion-a")
-    db.add(_usuario("demo@stockarg.test", "A", "sesion-a"))
+    db.add(_usuario("demo@stockarg.com.ar", "A", "sesion-a"))
     db.commit()
-    db.add(_usuario("demo@stockarg.test", "B", "sesion-a"))
+    db.add(_usuario("demo@stockarg.com.ar", "B", "sesion-a"))
 
     with pytest.raises(IntegrityError):
         db.commit()
@@ -57,8 +57,8 @@ def test_un_sandbox_no_admite_dos_veces_el_mismo_email(db):
 
 def test_un_email_de_la_app_no_choca_con_uno_de_demo(db):
     _sesion(db, "sesion-a")
-    db.add(_usuario("ana@stockarg.test", "Real"))
-    db.add(_usuario("ana@stockarg.test", "Demo", "sesion-a"))
+    db.add(_usuario("ana@stockarg.com.ar", "Real"))
+    db.add(_usuario("ana@stockarg.com.ar", "Demo", "sesion-a"))
     db.commit()
 
     assert db.query(Usuario).count() == 2

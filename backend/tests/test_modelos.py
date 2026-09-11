@@ -17,7 +17,7 @@ from app.models import (
 
 
 def _usuario(db, rol=Rol.VENDEDOR):
-    u = Usuario(email=f"{rol.value}@stockarg.test", nombre="Prueba", rol=rol)
+    u = Usuario(email=f"{rol.value}@stockarg.com.ar", nombre="Prueba", rol=rol)
     db.add(u)
     db.commit()
     return u
@@ -250,7 +250,7 @@ def test_el_bloqueo_por_intentos_se_guarda(db):
 
 def test_una_cuenta_de_google_no_necesita_contrasena(db):
     usuario = Usuario(
-        email="google@stockarg.test",
+        email="google@stockarg.com.ar",
         nombre="Con Google",
         google_id="1234567890",
         password_hash=None,
