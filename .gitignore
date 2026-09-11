@@ -25,3 +25,13 @@ release/
 
 # Editor
 .vscode/
+
+# Entorno virtual y artefactos de desarrollo web
+.venv/
+*.sqlite
+node_modules/
+.next/
+
+# Caches de herramientas
+.pytest_cache/
+.ruff_cache/
