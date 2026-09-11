@@ -1,79 +1,131 @@
 # StockARG
 
-Sistema de gestion de stock, ventas y clientes con UI en Tkinter y base MySQL.
+Sistema de gestión de stock, ventas, clientes y proveedores para un comercio.
 
-## Que resuelve
-- Unifica stock, ventas y clientes para reducir errores de planillas.
-- Da trazabilidad de movimientos y reportes para control diario.
+> **Versión 2.** StockARG nació como aplicación de escritorio en Python y
+> Tkinter sobre MySQL. Esta rama la reconstruye como aplicación web, con el
+> modelo de datos corregido y una demo pública para probarla sin instalar
+> nada. La versión de escritorio sigue disponible en el tag
+> [`v1.0-desktop`](../../releases/tag/v1.0-desktop).
+
+## Qué resuelve
+
+Nació del problema real de controlar mercadería con planillas separadas: los
+productos en una, las ventas en otra, y ninguna forma de saber qué pasó con el
+stock entre ayer y hoy. Unifica las cuatro cosas y deja traza de cada
+movimiento.
+
+## Qué cambió respecto de la versión de escritorio
+
+| Versión 1 (escritorio) | Versión 2 (web) |
+| --- | --- |
+| Una venta equivalía a un producto | Ticket con varios productos, total y medio de pago |
+| Los clientes no se vinculaban a las ventas | Cliente opcional en cada venta, con su historial |
+| Borrar un producto eliminaba sus ventas | Baja lógica: el historial no se destruye |
+| Clientes y proveedores con tres campos | Documento o CUIT, contacto y dirección |
+| Sin claves foráneas ni restricciones | Integridad declarada en la base |
+| Descuento de stock sin transacción | Transacción con bloqueo de fila |
+
+Se mantienen la identidad visual, el estado de stock por nivel sobre el stock
+inicial, el bloqueo por intentos fallidos, la exportación a CSV y PDF, la
+importación masiva y el panel de logs.
 
 ## Stack
-- Python 3.12+
-- Tkinter
-- MySQL 8+
 
-## Modulos
-- Login (email + Google opcional)
-- Clientes / Proveedores / Productos
-- Ventas + DetalleVenta
-- Movimientos de stock
-- Reportes CSV/PDF
-- Panel de estado
+- **Backend**: Python 3.12, FastAPI, SQLAlchemy, Pydantic, PostgreSQL 16
+- **Migraciones**: Alembic
+- **Frontend**: Next.js, React, TypeScript, Tailwind
+- **Pruebas**: pytest, sin contenedores ni base externa
+- **Despliegue**: frontend en Cloudflare Workers, API y base en un host propio
 
-## Arquitectura
-- UI (Tkinter)
-- Logica de negocio
-- Persistencia (MySQL)
-- Migraciones SQL en `db_migrations/`
+## Estructura
+
+```
+backend/
+  app/
+    core/        configuración y seguridad
+    db/          base declarativa y sesión
+    models/      modelo de dominio
+    schemas/     entrada y salida de la API
+    services/    reglas de negocio
+    api/routes/  endpoints
+  alembic/       migraciones de esquema
+  tests/         suite de pytest
+frontend/        aplicación web
+docs/            documentación y diagramas
+```
+
+## Puesta en marcha
+
+### 1. Base de datos
+
+```bash
+docker compose up -d db
+```
+
+### 2. Backend
+
+```bash
+cd backend
+python -m venv .venv
+.venv/bin/pip install -r requirements-dev.txt
+cp .env.example .env
+```
+
+`SECRET_KEY` es obligatoria y no tiene valor por defecto: la aplicación no
+arranca sin ella, y rechaza valores de relleno conocidos. Generar una con:
+
+```bash
+python -c "import secrets; print(secrets.token_urlsafe(48))"
+```
+
+Después, aplicar el esquema y levantar la API:
+
+```bash
+alembic upgrade head
+uvicorn app.main:app --reload
+```
+
+La API queda en `http://127.0.0.1:8000` y `GET /salud` informa si la base
+responde.
+
+### 3. Pruebas
+
+```bash
+pytest
+```
+
+La suite usa SQLite en memoria: no necesita Docker ni PostgreSQL.
 
 ## Modelo de datos
-Ver diagrama: `docs/StockARG-ERD.svg`
 
-![ERD](docs/StockARG-ERD.svg)
+Catorce tablas. Las entidades que puede tener un sandbox de demo llevan una
+columna de partición, de modo que los datos de la aplicación y los de cada
+visitante nunca se mezclan.
 
-Entidades principales:
-- Clientes
-- Proveedores
-- Productos
-- Ventas
-- DetalleVenta
-- MovimientosStock
-- Usuarios
+La unicidad de correo, código de barras, documento y CUIT se resuelve con
+índices parciales: uno sobre las filas de la aplicación y otro por sesión de
+demo. Un `UNIQUE` común impediría que dos visitantes recibieran el mismo
+catálogo sembrado, y un `UNIQUE` compuesto con la sesión no serviría, porque
+en SQL dos nulos no son iguales entre sí y la aplicación real terminaría
+admitiendo duplicados.
 
-## Reglas de integridad
-- No permitir venta con stock insuficiente.
-- Validar cantidades y precios positivos.
-- Evitar duplicados de productos/codigos.
-- Registrar movimientos por alta/venta/ajuste.
+## Seguridad
 
-## Edge cases cubiertos
-- Bloqueo de venta sin stock.
-- Control de duplicados.
-- Manejo de errores en exportacion.
+- La clave de firma es obligatoria, sin valor por defecto ni de relleno.
+- En producción, la documentación interactiva de la API y el esquema OpenAPI
+  devuelven 404.
+- CORS restringido a los orígenes declarados, sin comodines.
+- Contraseñas con bcrypt; nunca se escriben en un log.
+- Ninguna entidad con historial se borra físicamente.
+- Los secretos viven fuera del repositorio, y cada push escanea la historia
+  completa en busca de credenciales filtradas.
 
-## Instalacion
-1. Crear BD MySQL y usuario.
-2. Configurar credenciales en `Conexion.py`.
-3. Ejecutar migraciones en `db_migrations/`.
-4. `pip install -r requirements.txt`
-5. `python Main.py`
+## Estado
 
-## PDF (opcional)
-`pip install -r requirements-optional.txt`
+En desarrollo. Fase 0 completa: estructura, modelo de dominio, migración
+inicial, suite de pruebas e integración continua.
 
-## Testing (opcional)
-`pip install -r requirements-dev.txt`
+## Licencia
 
-`pytest -q`
-
-## Capturas
-![StockARG](Assets/StockARG%20imagen.png)
-![Stock](Assets/stock.png)
-
-## Roadmap corto
-- Roles y permisos.
-- Auditoria de movimientos.
-- Importacion CSV masiva.
-- Tests basicos de validacion.
-
-## Notas de seguridad
-No subir `email.env` ni `client_secret.json`.
+Proyecto personal de [Aaron Brumat](https://aaronbrumat.com.ar).

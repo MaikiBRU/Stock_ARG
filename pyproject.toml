@@ -1,0 +1,41 @@
+[project]
+name = "stockarg-backend"
+version = "2.0.0"
+description = "API de StockARG: gestion de stock, ventas, clientes y proveedores"
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+testpaths = ["backend/tests"]
+pythonpath = ["backend"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 80
+target-version = "py312"
+src = ["backend"]
+exclude = [".venv", "backend/alembic/versions"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle
+    "W",
+    "F",    # pyflakes
+    "I",    # orden de imports
+    "B",    # bugbear
+    "UP",   # pyupgrade
+    "D",    # docstrings
+]
+ignore = [
+    "D203",  # incompatible con D211
+    "D213",  # incompatible con D212
+]
+
+[tool.ruff.lint.per-file-ignores]
+# B008 marca Depends() en un argumento por defecto. Es exactamente
+# como FastAPI declara sus dependencias, asi que no aplica aca.
+"backend/app/api/routes/*" = ["B008"]
+"backend/tests/*" = ["D"]
+"backend/alembic/env.py" = ["D"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"

@@ -1,0 +1,38 @@
+# Entorno local de desarrollo. La produccion usa otro compose, en el
+# servidor, que ademas respalda la base antes de reconstruir.
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: stockarg
+      POSTGRES_PASSWORD: stockarg
+      POSTGRES_DB: stockarg
+    ports:
+      # Solo loopback: con "5432:5432" la base queda expuesta a
+      # toda la red local, y estas credenciales son de juguete.
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U stockarg -d stockarg"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    env_file: backend/.env
+    environment:
+      DATABASE_URL: postgresql+psycopg://stockarg:stockarg@db:5432/stockarg
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8000:8000"
+
+volumes:
+  db_data:

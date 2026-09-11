@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main, web]
+  pull_request:
+
+jobs:
+  backend:
+    name: Backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar dependencias
+        run: pip install -r backend/requirements-dev.txt
+
+      - name: Formato y estilo
+        run: |
+          ruff check backend/
+          ruff format --check backend/
+
+      - name: Pruebas
+        # La suite corre sin contenedores ni base externa (RNF-10).
+        run: pytest
+
+      - name: La migracion aplica sobre una base vacia
+        env:
+          SECRET_KEY: clave-solo-para-la-verificacion-de-ci
+          DATABASE_URL: sqlite+pysqlite:///./ci.sqlite
+        working-directory: backend
+        run: alembic upgrade head
+
+  secretos:
+    name: Sin secretos en la historia
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Escaneo con gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
