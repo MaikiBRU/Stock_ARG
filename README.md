@@ -12,7 +12,9 @@ productos en una, las ventas en otra, y ninguna forma de saber qué pasó con el
 stock entre ayer y hoy. Unifica las cuatro cosas y deja traza de cada
 movimiento.
 
-## Stack
+## Stack*
+
+*WEB*
 
 - **Backend**: Python 3.12, FastAPI, SQLAlchemy, Pydantic, PostgreSQL 16
 - **Migraciones**: Alembic
@@ -111,3 +113,62 @@ inicial, suite de pruebas e integración continua.
 ## Licencia
 
 Proyecto personal de [Aaron Brumat](https://aaronbrumat.com.ar).
+=======
+- Python 
+- Tkinter
+- MySQL 
+
+## Modulos
+- Login (email + Google opcional)
+- Clientes / Proveedores / Productos
+- Ventas + Detalle de Venta
+- Movimientos de stock
+- Reportes CSV/PDF
+- Panel de estado
+
+## Arquitectura
+- UI (Tkinter)
+- Logica de negocio
+- Persistencia (MySQL)
+- Migraciones SQL en `db_migrations/`
+
+Entidades principales:
+- Clientes
+- Proveedores
+- Productos
+- Ventas
+- DetalleVenta
+- MovimientosStock
+- Usuarios
+
+## Reglas de integridad
+- No permitir venta con stock insuficiente.
+- Validar cantidades y precios positivos.
+- Evitar duplicados de productos/codigos.
+- Registrar movimientos por alta/venta/ajuste.
+
+## Edge cases cubiertos
+- Bloqueo de venta sin stock.
+- Control de duplicados.
+- Manejo de errores en exportacion.
+
+## Instalacion
+1. Crear BD MySQL y usuario.
+2. Configurar credenciales en `Conexion.py`.
+3. Ejecutar migraciones en `db_migrations/`.
+4. `pip install -r requirements.txt`
+5. `python Main.py`
+
+## PDF (opcional)
+`pip install -r requirements-optional.txt`
+
+## Testing (opcional)
+`pip install -r requirements-dev.txt`
+
+`pytest -q`
+
+## Roadmap corto
+- Roles y permisos.
+- Auditoria de movimientos.
+- Importacion CSV masiva.
+- Tests basicos de validacion.
