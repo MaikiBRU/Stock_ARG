@@ -543,6 +543,55 @@ def test_cambiar_la_contrasena_con_la_anterior_correcta(client, correos):
     )
 
 
+def _perfil(client, token):
+    return client.get("/auth/perfil", headers=_cabecera(token)).status_code
+
+
+def test_cambiar_la_contrasena_cierra_las_otras_sesiones(client, correos):
+    """Un token robado deja de servir apenas la duena cambia la clave."""
+    robado = _cuenta_lista(client, correos)
+
+    respuesta = client.put(
+        "/auth/contrasena",
+        json={"contrasena_actual": CLAVE, "contrasena_nueva": "NuevaClave9"},
+        headers=_cabecera(robado),
+    )
+
+    assert respuesta.status_code == 200
+    assert _perfil(client, robado) == 401
+    assert _perfil(client, respuesta.json()["access_token"]) == 200
+
+
+def test_una_contrasena_equivocada_no_cierra_la_sesion(client, correos):
+    token = _cuenta_lista(client, correos)
+
+    client.put(
+        "/auth/contrasena",
+        json={
+            "contrasena_actual": "Equivocada9",
+            "contrasena_nueva": "OtraClave9",
+        },
+        headers=_cabecera(token),
+    )
+
+    assert _perfil(client, token) == 200
+
+
+def test_restablecer_la_contrasena_cierra_las_sesiones_abiertas(
+    client, correos
+):
+    robado = _cuenta_lista(client, correos)
+    correos.clear()
+    client.post("/auth/recuperar", json={"email": "ana@stockarg.com.ar"})
+
+    client.post(
+        "/auth/restablecer",
+        json={"token": correos[-1][1], "contrasena": "NuevaClave9"},
+    )
+
+    assert _perfil(client, robado) == 401
+
+
 def test_una_cuenta_de_google_no_entra_con_contrasena_vacia(client, db):
     """Hash nulo no puede validar nada, ni siquiera la cadena vacia."""
     db.add(
@@ -627,3 +676,59 @@ def test_no_se_puede_secuestrar_una_cuenta_sin_verificar(client, correos, db):
     )
     assert con_la_legitima.status_code == 200
     assert codigo_legitimo
+
+
+# --- cierre de sesion (RF-A06) -------------------------------------------
+
+
+def test_cerrar_sesion_invalida_el_token(client, correos):
+    """No alcanza con que el navegador lo borre.
+
+    Si alguien copio el token, con solo borrarlo del cliente seguiria
+    entrando hasta que venciera solo.
+    """
+    token = _cuenta_lista(client, correos)
+    assert (
+        client.get("/auth/perfil", headers=_cabecera(token)).status_code == 200
+    )
+
+    cierre = client.post("/auth/logout", headers=_cabecera(token))
+
+    assert cierre.status_code == 200
+    assert (
+        client.get("/auth/perfil", headers=_cabecera(token)).status_code == 401
+    )
+
+
+def test_cerrar_sesion_cierra_todas_las_sesiones_abiertas(client, correos):
+    """Dos dispositivos, un cierre: se caen los dos."""
+    primero = _cuenta_lista(client, correos)
+    segundo = client.post(
+        "/auth/login",
+        json={"email": "ana@stockarg.com.ar", "contrasena": CLAVE},
+    ).json()["access_token"]
+
+    client.post("/auth/logout", headers=_cabecera(primero))
+
+    assert (
+        client.get("/auth/perfil", headers=_cabecera(segundo)).status_code
+        == 401
+    )
+
+
+def test_se_puede_volver_a_ingresar_despues_de_cerrar(client, correos):
+    token = _cuenta_lista(client, correos)
+    client.post("/auth/logout", headers=_cabecera(token))
+
+    nuevo = client.post(
+        "/auth/login",
+        json={"email": "ana@stockarg.com.ar", "contrasena": CLAVE},
+    )
+
+    assert nuevo.status_code == 200
+    cabecera = _cabecera(nuevo.json()["access_token"])
+    assert client.get("/auth/perfil", headers=cabecera).status_code == 200
+
+
+def test_cerrar_sesion_exige_estar_autenticado(client):
+    assert client.post("/auth/logout").status_code == 401

@@ -7,6 +7,7 @@ from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
+from app.core import ajustes_vivos
 from app.core.security import leer_token
 from app.db.session import get_db
 from app.models import Rol, Usuario
@@ -68,11 +69,24 @@ def obtener_usuario_actual(
     # venza el token que ya tenia emitido.
     if usuario is None or not usuario.activo:
         raise CREDENCIALES_INVALIDAS
+    # RF-A06: cerrar sesion incrementa la version del usuario, asi que
+    # un token de una version anterior ya no vale aunque no haya vencido.
+    if carga.get("sv", 0) != (usuario.version_sesion or 0):
+        raise CREDENCIALES_INVALIDAS
+
     if not usuario.verificado:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="La cuenta todavia no fue verificada.",
         )
+
+    # Los parametros configurables se refrescan aca y no al arrancar: un
+    # cambio guardado desde la pantalla tiene efecto en la peticion
+    # siguiente, sin reiniciar el proceso.
+    from app.services.administracion import leer_configuracion
+
+    ajustes_vivos.fijar(leer_configuracion(db, usuario.id_sesion_demo))
+
     return usuario
 
 

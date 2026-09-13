@@ -54,6 +54,16 @@ class Usuario(MarcaDeTiempo, Base):
         DateTime(timezone=True), nullable=True
     )
 
+    # Cierre de sesion (RF-A06). El token lleva esta version; cerrar
+    # sesion la incrementa y todo token anterior deja de valer. Se usa
+    # un contador y no una marca de tiempo porque el "iat" de un token
+    # tiene resolucion de segundos: con relojes no se puede distinguir
+    # un token emitido justo antes del cierre de uno emitido justo
+    # despues, dentro del mismo segundo.
+    version_sesion: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
+
     id_sesion_demo: Mapped[str | None] = mapped_column(
         ForeignKey("sesiones_demo.id", ondelete="CASCADE"),
         nullable=True,

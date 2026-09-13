@@ -6,7 +6,8 @@ autogenerar migraciones.
 
 from app.models.auditoria import Auditoria
 from app.models.catalogo import Categoria, Cliente, MedioPago, Proveedor
-from app.models.compra import Compra, CompraItem
+from app.models.compra import Compra, CompraItem, EstadoCompra
+from app.models.configuracion import Configuracion
 from app.models.demo_session import SesionDemo
 from app.models.inventario import (
     BajaProducto,
@@ -27,6 +28,8 @@ __all__ = [
     "Cliente",
     "Compra",
     "CompraItem",
+    "Configuracion",
+    "EstadoCompra",
     "EstadoVenta",
     "MedioPago",
     "MotivoBaja",

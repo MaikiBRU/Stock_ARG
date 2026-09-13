@@ -16,10 +16,19 @@ from sqlalchemy import create_engine, event  # noqa: E402
 from sqlalchemy.orm import sessionmaker  # noqa: E402
 from sqlalchemy.pool import StaticPool  # noqa: E402
 
+from app.core import ajustes_vivos  # noqa: E402
 from app.db.base import Base  # noqa: E402
 from app.db.session import get_db  # noqa: E402
 from app.main import crear_app  # noqa: E402
 from app.models import *  # noqa: E402,F401,F403
+
+
+@pytest.fixture(autouse=True)
+def _ajustes_limpios():
+    """La cache de parametros no se arrastra entre pruebas."""
+    ajustes_vivos.limpiar()
+    yield
+    ajustes_vivos.limpiar()
 
 
 @pytest.fixture
@@ -64,3 +73,31 @@ def client(db):
     with TestClient(app) as c:
         yield c
     app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def sesiones(db):
+    """Crea un usuario por rol y devuelve sus cabeceras de sesion.
+
+    Evita repetir el alta completa con verificacion en cada prueba que
+    solo necesita estar autenticada con determinado rol.
+    """
+    from app.core.security import crear_token, hash_contrasena
+    from app.models import Rol, Usuario
+
+    cabeceras = {}
+    for rol in Rol:
+        usuario = Usuario(
+            email=f"{rol.value}@stockarg.com.ar",
+            nombre=rol.value.capitalize(),
+            password_hash=hash_contrasena("Kiosco2026"),
+            rol=rol,
+            verificado=True,
+            activo=True,
+        )
+        db.add(usuario)
+        db.flush()
+        token = crear_token(str(usuario.id), rol=rol.value)
+        cabeceras[rol.value] = {"Authorization": f"Bearer {token}"}
+    db.commit()
+    return cabeceras

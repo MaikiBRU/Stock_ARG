@@ -243,13 +243,17 @@ def editar_perfil(
     return UsuarioSalida.model_validate(usuario)
 
 
-@router.put("/contrasena", response_model=MensajeSalida)
+@router.put("/contrasena", response_model=TokenSalida)
 def cambiar_contrasena(
     datos: CambioContrasenaEntrada,
     db: Session = Depends(get_db),
     usuario: Usuario = Depends(obtener_usuario_actual),
-) -> MensajeSalida:
-    """Cambia la propia contrasena, pidiendo la anterior (RF-A07)."""
+) -> TokenSalida:
+    """Cambia la propia contrasena, pidiendo la anterior (RF-A07).
+
+    Cierra toda otra sesion abierta y devuelve un token nuevo para que
+    quien hizo el cambio siga adentro.
+    """
     try:
         servicio.cambiar_contrasena(
             db, usuario, datos.contrasena_actual, datos.contrasena_nueva
@@ -259,5 +263,27 @@ def cambiar_contrasena(
             status_code=status.HTTP_400_BAD_REQUEST, detail=error.mensaje
         ) from error
 
+    token, minutos = servicio.emitir_token_de_sesion(usuario)
     db.commit()
-    return MensajeSalida(mensaje="La contrasena se actualizo.")
+    return TokenSalida(
+        access_token=token,
+        expira_en_minutos=minutos,
+        usuario=UsuarioSalida.model_validate(usuario),
+    )
+
+
+@router.post("/logout", response_model=MensajeSalida)
+def logout(
+    db: Session = Depends(get_db),
+    usuario: Usuario = Depends(obtener_usuario_actual),
+) -> MensajeSalida:
+    """Cierra la sesion de verdad (RF-A06).
+
+    No alcanza con que el navegador borre el token: si alguien lo copio,
+    seguiria entrando hasta que venciera solo. Se sube la version de
+    sesion del usuario y todo token emitido con la anterior queda sin
+    valor, en esta sesion y en cualquier otra que tuviera abierta.
+    """
+    servicio.revocar_sesiones(usuario)
+    db.commit()
+    return MensajeSalida(mensaje="La sesion se cerro.")

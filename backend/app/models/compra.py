@@ -6,11 +6,13 @@ Una compra confirmada genera movimientos de entrada y sube el stock
 
 from datetime import date, datetime
 from decimal import Decimal
+from enum import StrEnum
 
 from sqlalchemy import (
     CheckConstraint,
     Date,
     DateTime,
+    Enum,
     ForeignKey,
     Integer,
     Numeric,
@@ -20,6 +22,13 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, MarcaDeTiempo
+
+
+class EstadoCompra(StrEnum):
+    """Situacion de una compra."""
+
+    REGISTRADA = "registrada"
+    ANULADA = "anulada"
 
 
 class Compra(MarcaDeTiempo, Base):
@@ -39,6 +48,25 @@ class Compra(MarcaDeTiempo, Base):
     # Numero de remito o factura del proveedor, tal como viene en papel.
     comprobante: Mapped[str | None] = mapped_column(String(60), nullable=True)
     notas: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+    # Una compra mal cargada infla el stock. Sin poder anularla, la
+    # unica correccion seria un ajuste manual que no queda ligado al
+    # remito que lo origino.
+    estado: Mapped[EstadoCompra] = mapped_column(
+        Enum(EstadoCompra, native_enum=False, length=20),
+        nullable=False,
+        default=EstadoCompra.REGISTRADA,
+        index=True,
+    )
+    anulada_en: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    id_usuario_anulacion: Mapped[int | None] = mapped_column(
+        ForeignKey("usuarios.id"), nullable=True
+    )
+    motivo_anulacion: Mapped[str | None] = mapped_column(
+        String(255), nullable=True
+    )
 
     id_proveedor: Mapped[int] = mapped_column(
         ForeignKey("proveedores.id"), nullable=False, index=True

@@ -7,7 +7,19 @@ las pruebas la monten sin abrir un puerto.
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import auth, salud
+from app.api.routes import (
+    administracion,
+    auth,
+    categorias,
+    clientes,
+    medios_pago,
+    productos,
+    proveedores,
+    reportes,
+    salud,
+    stock,
+    ventas,
+)
 from app.core.config import get_settings
 
 
@@ -39,6 +51,15 @@ def crear_app() -> FastAPI:
 
     app.include_router(salud.router)
     app.include_router(auth.router)
+    app.include_router(categorias.router)
+    app.include_router(productos.router)
+    app.include_router(stock.router)
+    app.include_router(clientes.router)
+    app.include_router(medios_pago.router)
+    app.include_router(ventas.router)
+    app.include_router(proveedores.router)
+    app.include_router(reportes.router)
+    app.include_router(administracion.router)
 
     return app
 

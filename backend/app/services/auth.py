@@ -276,6 +276,11 @@ def autenticar(db: Session, email: str, contrasena: str) -> Usuario:
     return usuario
 
 
+def revocar_sesiones(usuario: Usuario) -> None:
+    """Invalida todos los tokens emitidos hasta ahora para el usuario."""
+    usuario.version_sesion = (usuario.version_sesion or 0) + 1
+
+
 def emitir_token_de_sesion(usuario: Usuario) -> tuple[str, int]:
     """Token de acceso del usuario, con sus minutos de vigencia."""
     ajustes = get_settings()
@@ -284,6 +289,7 @@ def emitir_token_de_sesion(usuario: Usuario) -> tuple[str, int]:
         tipo="acceso",
         rol=usuario.rol.value,
         email=usuario.email,
+        sv=usuario.version_sesion or 0,
     )
     return token, ajustes.access_token_expire_minutes
 
@@ -331,6 +337,9 @@ def restablecer_contrasena(
 
     registro.usado = True
     usuario.password_hash = hash_contrasena(contrasena_nueva)
+    # Quien recupera la clave suele sospechar que otro la conoce: toda
+    # sesion abierta con la clave vieja deja de valer.
+    revocar_sesiones(usuario)
     # Recuperar la clave tambien destraba la cuenta: quien llego al
     # correo demostro ser su duena.
     usuario.intentos_fallidos = 0
@@ -351,5 +360,7 @@ def cambiar_contrasena(
             "La contrasena actual no es correcta.", "credenciales"
         )
     usuario.password_hash = hash_contrasena(nueva)
+    # Cierra las demas sesiones; quien la cambio recibe un token nuevo.
+    revocar_sesiones(usuario)
     db.flush()
     return usuario

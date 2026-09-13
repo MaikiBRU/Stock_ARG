@@ -81,6 +81,15 @@ class Settings(BaseSettings):
     stock_umbral_bajo: int = 30
     stock_umbral_medio: int = 54
 
+    # --- limites de caja (modulo E) -------------------------------------
+    # Quien atiende el mostrador vende al precio de lista. Sin un tope,
+    # un vendedor puede escribir precio 1 o descontar el total y llevarse
+    # la mercaderia: el stock se descuenta igual y el inventario cuadra,
+    # asi que la perdida no aparece hasta el cierre de caja. Es el fraude
+    # de caja mas comun en un comercio.
+    descuento_max_vendedor_porcentaje: int = 10
+    vendedor_puede_pactar_precio: bool = False
+
     # --- correo y Google ------------------------------------------------
     sendgrid_api_key: str | None = None
     email_from: str = "no-reply@stockarg.local"
@@ -123,6 +132,15 @@ class Settings(BaseSettings):
                 "Los umbrales de stock deben cumplir "
                 f"0 <= bajo < medio <= 100. Recibido: bajo={bajo}, "
                 f"medio={medio}."
+            )
+        return self
+
+    @model_validator(mode="after")
+    def _validar_tope_de_descuento(self) -> "Settings":
+        """El tope de descuento es un porcentaje entre 0 y 100."""
+        if not 0 <= self.descuento_max_vendedor_porcentaje <= 100:
+            raise ValueError(
+                "descuento_max_vendedor_porcentaje debe estar entre 0 y 100."
             )
         return self
 
