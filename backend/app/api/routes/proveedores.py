@@ -14,7 +14,11 @@ from fastapi import (
 )
 from sqlalchemy.orm import Session
 
-from app.api.deps import exigir_gestion
+from app.api.deps import (
+    cupo_de_exportacion,
+    cupo_de_importacion,
+    exigir_gestion,
+)
 from app.db.session import get_db
 from app.models import Usuario
 from app.schemas.auth import MensajeSalida
@@ -152,7 +156,9 @@ def _salida(resultado) -> ImportacionSalida:
     )
 
 
-@router.get("/proveedores/exportar")
+@router.get(
+    "/proveedores/exportar", dependencies=[Depends(cupo_de_exportacion)]
+)
 def exportar(
     formato: str = Query(default="csv", pattern="^(csv|pdf)$"),
     busqueda: str | None = Query(default=None, max_length=120),
@@ -211,7 +217,9 @@ def exportar(
 
 
 @router.post(
-    "/proveedores/importar/previsualizar", response_model=ImportacionSalida
+    "/proveedores/importar/previsualizar",
+    response_model=ImportacionSalida,
+    dependencies=[Depends(cupo_de_importacion)],
 )
 def previsualizar_importacion(
     archivo: UploadFile = File(...),
@@ -231,6 +239,7 @@ def previsualizar_importacion(
     "/proveedores/importar",
     response_model=ImportacionSalida,
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(cupo_de_importacion)],
 )
 def importar(
     archivo: UploadFile = File(...),

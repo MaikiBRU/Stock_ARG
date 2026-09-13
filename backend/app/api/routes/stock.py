@@ -13,7 +13,11 @@ from fastapi import (
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.api.deps import exigir_gestion, obtener_usuario_actual
+from app.api.deps import (
+    cupo_de_exportacion,
+    exigir_gestion,
+    obtener_usuario_actual,
+)
 from app.db.session import get_db
 from app.models import Producto, TipoMovimiento, Usuario
 from app.schemas.comunes import LIMITE_MAXIMO, LIMITE_POR_DEFECTO, Pagina
@@ -152,7 +156,9 @@ ENCABEZADOS_MOVIMIENTOS = [
 ]
 
 
-@router.get("/movimientos/exportar")
+@router.get(
+    "/movimientos/exportar", dependencies=[Depends(cupo_de_exportacion)]
+)
 def exportar_movimientos(
     formato: str = Query(default="csv", pattern="^(csv|pdf)$"),
     id_producto: int | None = None,

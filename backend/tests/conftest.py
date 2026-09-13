@@ -9,6 +9,8 @@ import os
 os.environ.setdefault("SECRET_KEY", "clave-de-prueba-suficientemente-larga")
 os.environ.setdefault("DATABASE_URL", "sqlite+pysqlite:///:memory:")
 os.environ.setdefault("ENVIRONMENT", "development")
+# Sin bucle de limpieza en segundo plano: las pruebas la llaman directo.
+os.environ.setdefault("DEMO_CLEANUP_INTERVAL_SECONDS", "0")
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
@@ -70,6 +72,11 @@ def client(db):
         try:
             yield db
         finally:
+            # Una peticion que se corta a mitad de un flush deja filas
+            # pendientes. En produccion las descarta el cierre de la
+            # sesion; aca la sesion sigue viva y hay que hacerlo a mano.
+            if db.new or db.dirty or db.deleted or not db.is_active:
+                db.rollback()
             particion.liberar(db)
             db.info.pop(ajustes_vivos.CLAVE_EN_SESION, None)
 

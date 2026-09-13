@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from sqlalchemy import DateTime, String
+from sqlalchemy import DateTime, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
@@ -32,4 +32,12 @@ class SesionDemo(Base):
     # quien era la conexion.
     ip_hash: Mapped[str | None] = mapped_column(
         String(64), nullable=True, index=True
+    )
+    # Cupos de acciones (RF-J06). Sobreviven al reinicio del sandbox: si
+    # no, reiniciar serviria para esquivarlos.
+    importaciones: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
+    exportaciones: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
     )

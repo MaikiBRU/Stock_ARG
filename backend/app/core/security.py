@@ -77,7 +77,9 @@ def crear_token(
     return jwt.encode(carga, ajustes.secret_key, algorithm=ALGORITMO)
 
 
-def leer_token(token: str, tipo_esperado: str = "acceso") -> dict[str, Any]:
+def leer_token(
+    token: str, tipo_esperado: str | tuple[str, ...] = "acceso"
+) -> dict[str, Any]:
     """Valida un token y devuelve su contenido.
 
     Fija el algoritmo en la verificacion: aceptar el que venga en la
@@ -91,7 +93,10 @@ def leer_token(token: str, tipo_esperado: str = "acceso") -> dict[str, Any]:
         algorithms=[ALGORITMO],
         options={"require": ["exp", "sub", "typ"]},
     )
-    if carga.get("typ") != tipo_esperado:
+    aceptados = (
+        (tipo_esperado,) if isinstance(tipo_esperado, str) else tipo_esperado
+    )
+    if carga.get("typ") not in aceptados:
         raise jwt.InvalidTokenError("El token no es del tipo esperado.")
     return carga
 
@@ -123,5 +128,10 @@ def hash_opaco(valor: str) -> str:
 
 
 def comparar_seguro(a: str, b: str) -> bool:
-    """Compara dos cadenas en tiempo constante."""
-    return hmac.compare_digest(a, b)
+    """Compara dos cadenas en tiempo constante.
+
+    Se comparan los bytes y no las cadenas: compare_digest rechaza con
+    TypeError un str que no sea ASCII, y una cabecera con un caracter
+    raro terminaria en un 500 en lugar de un rechazo comun.
+    """
+    return hmac.compare_digest(a.encode("utf-8"), b.encode("utf-8"))

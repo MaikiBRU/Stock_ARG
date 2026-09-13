@@ -105,6 +105,12 @@ class Settings(BaseSettings):
     demo_rate_limit_per_hour: int = 12
     demo_cleanup_interval_seconds: int = 300
     demo_maintenance_token: str | None = None
+    # Cupos por sandbox (RF-J06): acotan lo que un visitante anonimo
+    # puede escribir en la base y pedirle al servidor.
+    demo_max_productos: int = 300
+    demo_max_ventas: int = 800
+    demo_max_importaciones: int = 15
+    demo_max_exportaciones: int = 40
 
     @field_validator("secret_key")
     @classmethod
@@ -155,6 +161,18 @@ class Settings(BaseSettings):
             raise ValueError(
                 "demo_idle_timeout_minutes debe ser al menos 1 minuto."
             )
+        # Un cupo en cero no apaga la demo: la deja inservible sin
+        # decirlo. Para apagarla esta demo_enabled.
+        for nombre in (
+            "demo_max_active_sessions",
+            "demo_rate_limit_per_hour",
+            "demo_max_productos",
+            "demo_max_ventas",
+            "demo_max_importaciones",
+            "demo_max_exportaciones",
+        ):
+            if getattr(self, nombre) < 1:
+                raise ValueError(f"{nombre} debe ser al menos 1.")
         return self
 
     @property

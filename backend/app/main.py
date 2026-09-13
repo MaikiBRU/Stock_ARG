@@ -4,14 +4,22 @@ La app se arma en una funcion aparte del arranque del servidor para que
 las pruebas la monten sin abrir un puerto.
 """
 
-from fastapi import FastAPI
+import asyncio
+import logging
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager, suppress
+
+from fastapi import FastAPI, Request
+from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.api.routes import (
     administracion,
     auth,
     categorias,
     clientes,
+    demo,
     medios_pago,
     productos,
     proveedores,
@@ -21,6 +29,63 @@ from app.api.routes import (
     ventas,
 )
 from app.core.config import get_settings
+from app.db.session import SessionLocal
+from app.services import demo as servicio_demo
+
+registro = logging.getLogger("stockarg")
+
+
+def _limpiar_demo_una_vez() -> int:
+    """Borra los sandboxes vencidos con una sesion propia del sistema."""
+    with SessionLocal() as sesion:
+        return servicio_demo.purgar_vencidas(sesion)
+
+
+async def _limpiar_demo_periodicamente(intervalo: int) -> None:
+    """Limpieza en segundo plano de la demo (RF-J09).
+
+    Si este bucle se cae, la demo sigue siendo correcta: cada peticion
+    rechaza por su cuenta las sesiones vencidas. Solo se acumularian
+    filas hasta la proxima limpieza.
+    """
+    while True:
+        await asyncio.sleep(intervalo)
+        try:
+            await run_in_threadpool(_limpiar_demo_una_vez)
+        except Exception:
+            registro.exception("Fallo la limpieza periodica de la demo.")
+
+
+@asynccontextmanager
+async def _ciclo_de_vida(_app: FastAPI) -> AsyncIterator[None]:
+    """Arranca y detiene las tareas de fondo."""
+    ajustes = get_settings()
+    tarea = None
+    if ajustes.demo_enabled and ajustes.demo_cleanup_interval_seconds > 0:
+        tarea = asyncio.create_task(
+            _limpiar_demo_periodicamente(ajustes.demo_cleanup_interval_seconds)
+        )
+    try:
+        yield
+    finally:
+        if tarea is not None:
+            tarea.cancel()
+            with suppress(asyncio.CancelledError):
+                await tarea
+
+
+async def _cupo_agotado(_request: Request, error: Exception) -> JSONResponse:
+    """Un cupo de la demo agotado es un 429, no un error del servidor.
+
+    Los topes de filas se controlan al escribir, en cualquier endpoint,
+    asi que la excepcion puede venir de cualquier lado.
+    """
+    detalle = (
+        error.detalle()
+        if isinstance(error, servicio_demo.CupoAgotado)
+        else {"mensaje": str(error)}
+    )
+    return JSONResponse(status_code=429, content={"detail": detalle})
 
 
 def crear_app() -> FastAPI:
@@ -39,6 +104,7 @@ def crear_app() -> FastAPI:
         docs_url="/docs" if mostrar_docs else None,
         redoc_url="/redoc" if mostrar_docs else None,
         openapi_url="/openapi.json" if mostrar_docs else None,
+        lifespan=_ciclo_de_vida,
     )
 
     app.add_middleware(
@@ -48,6 +114,7 @@ def crear_app() -> FastAPI:
         allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
         allow_headers=["Authorization", "Content-Type"],
     )
+    app.add_exception_handler(servicio_demo.CupoAgotado, _cupo_agotado)
 
     app.include_router(salud.router)
     app.include_router(auth.router)
@@ -60,6 +127,7 @@ def crear_app() -> FastAPI:
     app.include_router(proveedores.router)
     app.include_router(reportes.router)
     app.include_router(administracion.router)
+    app.include_router(demo.router)
 
     return app
 

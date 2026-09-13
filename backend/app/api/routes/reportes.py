@@ -5,7 +5,11 @@ from datetime import date
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import exigir_administracion, exigir_gestion
+from app.api.deps import (
+    cupo_de_exportacion,
+    exigir_administracion,
+    exigir_gestion,
+)
 from app.db.session import get_db
 from app.models import Usuario
 from app.schemas.compra import (
@@ -198,7 +202,7 @@ def rentabilidad(
     return RentabilidadSalida(**datos)
 
 
-@router.get("/exportar")
+@router.get("/exportar", dependencies=[Depends(cupo_de_exportacion)])
 def exportar(
     reporte: str = Query(pattern="^(mas-vendidos|medios-pago|categorias)$"),
     formato: str = Query(default="csv", pattern="^(csv|pdf)$"),

@@ -13,7 +13,11 @@ from fastapi import (
 )
 from sqlalchemy.orm import Session
 
-from app.api.deps import exigir_gestion, obtener_usuario_actual
+from app.api.deps import (
+    cupo_de_exportacion,
+    exigir_gestion,
+    obtener_usuario_actual,
+)
 from app.db.session import get_db
 from app.models import EstadoVenta, Usuario, Venta
 from app.schemas.comunes import LIMITE_MAXIMO, LIMITE_POR_DEFECTO, Pagina
@@ -106,7 +110,7 @@ def listar(
     )
 
 
-@router.get("/exportar")
+@router.get("/exportar", dependencies=[Depends(cupo_de_exportacion)])
 def exportar(
     formato: str = Query(default="csv", pattern="^(csv|pdf)$"),
     desde: date | None = None,
@@ -228,7 +232,9 @@ def obtener(
     return VentaSalida.model_validate(venta)
 
 
-@router.get("/{id_venta}/comprobante")
+@router.get(
+    "/{id_venta}/comprobante", dependencies=[Depends(cupo_de_exportacion)]
+)
 def comprobante(
     id_venta: int,
     db: Session = Depends(get_db),

@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import ip_del_cliente, obtener_usuario_actual
+from app.api.deps import ip_del_cliente, obtener_usuario_actual, rechazar_demo
 from app.core.config import Settings, get_settings
 from app.db.session import get_db
 from app.models import TipoCodigo, Usuario
@@ -247,7 +247,9 @@ def editar_perfil(
 def cambiar_contrasena(
     datos: CambioContrasenaEntrada,
     db: Session = Depends(get_db),
-    usuario: Usuario = Depends(obtener_usuario_actual),
+    # Los usuarios de la demo no tienen contrasena y a un sandbox se
+    # entra por token: ponerle una no sirve para nada.
+    usuario: Usuario = Depends(rechazar_demo),
 ) -> TokenSalida:
     """Cambia la propia contrasena, pidiendo la anterior (RF-A07).
 
