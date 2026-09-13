@@ -33,7 +33,9 @@ def listar(
     return [
         CategoriaSalida.model_validate(c)
         for c in servicio.listar_categorias(
-            db, incluir_inactivas=incluir_inactivas
+            db,
+            incluir_inactivas=incluir_inactivas,
+            id_sesion_demo=usuario.id_sesion_demo,
         )
     ]
 
@@ -49,7 +51,10 @@ def crear(
     """Alta de categoria. Propietario o encargado."""
     try:
         categoria = servicio.crear_categoria(
-            db, datos.nombre, datos.descripcion
+            db,
+            datos.nombre,
+            datos.descripcion,
+            id_sesion_demo=usuario.id_sesion_demo,
         )
     except servicio.ErrorDeProducto as error:
         raise _error(error) from error
@@ -67,7 +72,11 @@ def actualizar(
     """Edicion de categoria. Propietario o encargado."""
     try:
         categoria = servicio.actualizar_categoria(
-            db, id_categoria, datos.nombre, datos.descripcion
+            db,
+            id_categoria,
+            datos.nombre,
+            datos.descripcion,
+            id_sesion_demo=usuario.id_sesion_demo,
         )
     except servicio.ErrorDeProducto as error:
         raise _error(error) from error
@@ -83,7 +92,7 @@ def desactivar(
 ) -> MensajeSalida:
     """Baja logica de categoria. Propietario o encargado."""
     try:
-        servicio.desactivar_categoria(db, id_categoria)
+        servicio.desactivar_categoria(db, id_categoria, usuario.id_sesion_demo)
     except servicio.ErrorDeProducto as error:
         raise _error(error) from error
     db.commit()

@@ -70,6 +70,7 @@ def listar(
         incluir_inactivos=incluir_inactivos,
         desplazamiento=(pagina - 1) * limite,
         limite=limite,
+        id_sesion_demo=usuario.id_sesion_demo,
     )
     return Pagina[ProveedorSalida](
         items=[ProveedorSalida.model_validate(p) for p in items],
@@ -91,7 +92,9 @@ def crear(
 ) -> ProveedorSalida:
     """Alta de proveedor (RF-G01)."""
     try:
-        proveedor = servicio.crear(db, datos.model_dump(mode="json"))
+        proveedor = servicio.crear(
+            db, datos.model_dump(mode="json"), usuario.id_sesion_demo
+        )
     except ErrorDeProducto as error:
         raise _error(error) from error
     db.commit()
@@ -164,6 +167,7 @@ def exportar(
         incluir_inactivos=incluir_inactivos,
         desplazamiento=0,
         limite=5000,
+        id_sesion_demo=usuario.id_sesion_demo,
     )
 
     encabezados = [
@@ -216,7 +220,9 @@ def previsualizar_importacion(
 ) -> ImportacionSalida:
     """Dice que pasaria con cada fila, sin escribir nada (RF-G05)."""
     filas = _leer(archivo)
-    resultado = importacion.analizar_contactos(db, filas, "proveedor")
+    resultado = importacion.analizar_contactos(
+        db, filas, "proveedor", id_sesion_demo=usuario.id_sesion_demo
+    )
     db.rollback()
     return _salida(resultado)
 
@@ -234,7 +240,9 @@ def importar(
     """Importa proveedores y saltea las filas con error (RF-G05)."""
     filas = _leer(archivo)
     try:
-        resultado = importacion.aplicar_contactos(db, filas, "proveedor")
+        resultado = importacion.aplicar_contactos(
+            db, filas, "proveedor", id_sesion_demo=usuario.id_sesion_demo
+        )
     except ErrorDeProducto as error:
         db.rollback()
         raise _error(error) from error
@@ -250,7 +258,7 @@ def obtener(
 ) -> ProveedorSalida:
     """Ficha de un proveedor."""
     try:
-        proveedor = servicio.obtener(db, id_proveedor)
+        proveedor = servicio.obtener(db, id_proveedor, usuario.id_sesion_demo)
     except ErrorDeProducto as error:
         raise _error(error) from error
     return ProveedorSalida.model_validate(proveedor)
@@ -267,7 +275,9 @@ def productos(
 ) -> list[ProductoSalida]:
     """Productos que provee (RF-G02)."""
     try:
-        items = servicio.productos_que_provee(db, id_proveedor)
+        items = servicio.productos_que_provee(
+            db, id_proveedor, usuario.id_sesion_demo
+        )
     except ErrorDeProducto as error:
         raise _error(error) from error
 
@@ -293,7 +303,9 @@ def resumen(
 ) -> ResumenProveedorSalida:
     """Cuanto se le compro (RF-G04)."""
     try:
-        datos = servicio_compras.resumen_por_proveedor(db, id_proveedor)
+        datos = servicio_compras.resumen_por_proveedor(
+            db, id_proveedor, usuario.id_sesion_demo
+        )
     except ErrorDeProducto as error:
         raise _error(error) from error
     return ResumenProveedorSalida(**datos)
@@ -309,7 +321,10 @@ def actualizar(
     """Edicion de proveedor (RF-G01)."""
     try:
         proveedor = servicio.actualizar(
-            db, id_proveedor, datos.model_dump(mode="json")
+            db,
+            id_proveedor,
+            datos.model_dump(mode="json"),
+            id_sesion_demo=usuario.id_sesion_demo,
         )
     except ErrorDeProducto as error:
         raise _error(error) from error
@@ -325,7 +340,7 @@ def eliminar(
 ) -> MensajeSalida:
     """Baja de proveedor."""
     try:
-        _, borrado = servicio.eliminar(db, id_proveedor)
+        _, borrado = servicio.eliminar(db, id_proveedor, usuario.id_sesion_demo)
     except ErrorDeProducto as error:
         raise _error(error) from error
     db.commit()
@@ -360,6 +375,7 @@ def listar_compras(
         hasta=hasta,
         desplazamiento=(pagina - 1) * limite,
         limite=limite,
+        id_sesion_demo=usuario.id_sesion_demo,
     )
     return Pagina[CompraResumenSalida](
         items=[CompraResumenSalida.model_validate(c) for c in items],
@@ -399,6 +415,7 @@ def registrar_compra(
             comprobante=datos.comprobante,
             notas=datos.notas,
             actualizar_costo=datos.actualizar_costo,
+            id_sesion_demo=usuario.id_sesion_demo,
         )
     except ErrorDeProducto as error:
         db.rollback()
@@ -416,7 +433,7 @@ def obtener_compra(
 ) -> CompraSalida:
     """Detalle de una compra."""
     try:
-        compra = servicio_compras.obtener(db, id_compra)
+        compra = servicio_compras.obtener(db, id_compra, usuario.id_sesion_demo)
     except ErrorDeProducto as error:
         raise _error(error) from error
     return CompraSalida.model_validate(compra)
@@ -431,7 +448,13 @@ def anular_compra(
 ) -> CompraSalida:
     """Anula una compra y descuenta lo que habia entrado."""
     try:
-        compra = servicio_compras.anular(db, id_compra, usuario, datos.motivo)
+        compra = servicio_compras.anular(
+            db,
+            id_compra,
+            usuario,
+            datos.motivo,
+            id_sesion_demo=usuario.id_sesion_demo,
+        )
     except ErrorDeProducto as error:
         db.rollback()
         raise _error(error) from error

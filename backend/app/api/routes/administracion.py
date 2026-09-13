@@ -53,7 +53,11 @@ def panel(
     usuario: Usuario = Depends(exigir_gestion),
 ) -> PanelSalida:
     """Indicadores del dia, alertas y grafico (RF-B01 a RF-B08)."""
-    datos = dashboard.armar(db, ver_costo=usuario.puede_administrar)
+    datos = dashboard.armar(
+        db,
+        ver_costo=usuario.puede_administrar,
+        id_sesion_demo=usuario.id_sesion_demo,
+    )
 
     for clave in ("bajo_minimo", "proximos_a_vencer", "vencidos"):
         salidas = []
@@ -86,6 +90,7 @@ def listar_usuarios(
         incluir_inactivos=incluir_inactivos,
         desplazamiento=(pagina - 1) * limite,
         limite=limite,
+        id_sesion_demo=usuario.id_sesion_demo,
     )
     return Pagina[UsuarioAdminSalida](
         items=[_a_salida_admin(u) for u in items],
@@ -114,6 +119,7 @@ def crear_usuario(
             nombre=datos.nombre,
             contrasena=datos.contrasena,
             rol=datos.rol,
+            id_sesion_demo=usuario.id_sesion_demo,
         )
     except ErrorDeProducto as error:
         db.rollback()
@@ -142,7 +148,9 @@ def cambiar_rol(
 ) -> UsuarioAdminSalida:
     """Cambia el rol de un usuario (RF-I01, RF-I03)."""
     try:
-        modificado = servicio.cambiar_rol(db, id_usuario, datos.rol)
+        modificado = servicio.cambiar_rol(
+            db, id_usuario, datos.rol, id_sesion_demo=usuario.id_sesion_demo
+        )
     except ErrorDeProducto as error:
         db.rollback()
         raise _error(error) from error
@@ -172,7 +180,11 @@ def habilitar(
     """Vuelve a habilitar una cuenta y le saca el bloqueo."""
     try:
         modificado = servicio.cambiar_estado(
-            db, id_usuario, activo=True, ejecutor=usuario
+            db,
+            id_usuario,
+            activo=True,
+            ejecutor=usuario,
+            id_sesion_demo=usuario.id_sesion_demo,
         )
     except ErrorDeProducto as error:
         db.rollback()
@@ -200,7 +212,11 @@ def deshabilitar(
     """Da de baja una cuenta sin borrarla (RF-I02, RF-I03)."""
     try:
         modificado = servicio.cambiar_estado(
-            db, id_usuario, activo=False, ejecutor=usuario
+            db,
+            id_usuario,
+            activo=False,
+            ejecutor=usuario,
+            id_sesion_demo=usuario.id_sesion_demo,
         )
     except ErrorDeProducto as error:
         db.rollback()
@@ -243,6 +259,7 @@ def auditoria(
         hasta=hasta,
         desplazamiento=(pagina - 1) * limite,
         limite=limite,
+        id_sesion_demo=usuario.id_sesion_demo,
     )
     return Pagina[AuditoriaSalida](
         items=[AuditoriaSalida.model_validate(a) for a in items],
@@ -261,7 +278,9 @@ def leer_configuracion(
     usuario: Usuario = Depends(exigir_gestion),
 ) -> ConfiguracionSalida:
     """Parametros del comercio. Los lee la gestion."""
-    return ConfiguracionSalida(valores=servicio.leer_configuracion(db))
+    return ConfiguracionSalida(
+        valores=servicio.leer_configuracion(db, usuario.id_sesion_demo)
+    )
 
 
 @router.put("/configuracion", response_model=ConfiguracionSalida)
@@ -273,7 +292,9 @@ def guardar_configuracion(
 ) -> ConfiguracionSalida:
     """Cambia los parametros. Solo el propietario (RF-I06)."""
     try:
-        valores = servicio.guardar_configuracion(db, datos.cambios)
+        valores = servicio.guardar_configuracion(
+            db, datos.cambios, usuario.id_sesion_demo
+        )
     except ErrorDeProducto as error:
         db.rollback()
         raise _error(error) from error

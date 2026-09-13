@@ -96,6 +96,7 @@ def listar(
         busqueda=busqueda,
         desplazamiento=(pagina - 1) * limite,
         limite=limite,
+        id_sesion_demo=usuario.id_sesion_demo,
     )
     return Pagina[VentaResumenSalida](
         items=[VentaResumenSalida.model_validate(v) for v in items],
@@ -122,6 +123,7 @@ def exportar(
         estado=estado,
         desplazamiento=0,
         limite=MAX_FILAS_EXPORTACION,
+        id_sesion_demo=usuario.id_sesion_demo,
     )
 
     encabezados = [
@@ -192,6 +194,7 @@ def registrar(
             id_cliente=datos.id_cliente,
             recibido=datos.recibido,
             descuento_general=datos.descuento or Decimal("0.00"),
+            id_sesion_demo=usuario.id_sesion_demo,
         )
     except ErrorDeProducto as error:
         # Nada a medias: si algo falla, ni la venta ni el descuento de
@@ -211,7 +214,7 @@ def obtener(
 ) -> VentaSalida:
     """Detalle completo del ticket (RF-E14)."""
     try:
-        venta = servicio.obtener(db, id_venta)
+        venta = servicio.obtener(db, id_venta, usuario.id_sesion_demo)
     except ErrorDeProducto as error:
         raise _error(error) from error
 
@@ -237,7 +240,7 @@ def comprobante(
     sistema no emite documentos fiscales.
     """
     try:
-        venta = servicio.obtener(db, id_venta)
+        venta = servicio.obtener(db, id_venta, usuario.id_sesion_demo)
     except ErrorDeProducto as error:
         raise _error(error) from error
 
@@ -287,7 +290,13 @@ def anular(
 ) -> VentaSalida:
     """Anula una venta y repone el stock (RF-E12)."""
     try:
-        venta = servicio.anular(db, id_venta, usuario, datos.motivo)
+        venta = servicio.anular(
+            db,
+            id_venta,
+            usuario,
+            datos.motivo,
+            id_sesion_demo=usuario.id_sesion_demo,
+        )
     except ErrorDeProducto as error:
         db.rollback()
         raise _error(error) from error

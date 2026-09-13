@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.core import ajustes_vivos
 from app.core.security import leer_token
+from app.db import particion
 from app.db.session import get_db
 from app.models import Rol, Usuario
 
@@ -73,6 +74,10 @@ def obtener_usuario_actual(
     # un token de una version anterior ya no vale aunque no haya vencido.
     if carga.get("sv", 0) != (usuario.version_sesion or 0):
         raise CREDENCIALES_INVALIDAS
+    # Un token de la aplicacion nunca abre un usuario de un sandbox: los
+    # ids son una secuencia compartida y se pueden adivinar.
+    if usuario.id_sesion_demo is not None:
+        raise CREDENCIALES_INVALIDAS
 
     if not usuario.verificado:
         raise HTTPException(
@@ -85,7 +90,10 @@ def obtener_usuario_actual(
     # siguiente, sin reiniciar el proceso.
     from app.services.administracion import leer_configuracion
 
-    ajustes_vivos.fijar(leer_configuracion(db, usuario.id_sesion_demo))
+    # Desde aca, toda consulta de la peticion queda encerrada en la
+    # particion del usuario (ver app.db.particion).
+    particion.fijar(db, usuario.id_sesion_demo)
+    ajustes_vivos.fijar(db, leer_configuracion(db, usuario.id_sesion_demo))
 
     return usuario
 

@@ -43,7 +43,11 @@ def ventas(
     """Total facturado, tickets y ticket promedio (RF-H01)."""
     try:
         datos = reportes.ventas_por_periodo(
-            db, periodo=periodo, desde=desde, hasta=hasta
+            db,
+            periodo=periodo,
+            desde=desde,
+            hasta=hasta,
+            id_sesion_demo=usuario.id_sesion_demo,
         )
     except ErrorDeProducto as error:
         raise _error(error) from error
@@ -61,7 +65,11 @@ def serie(
     """Facturado dia por dia, para el grafico."""
     try:
         puntos = reportes.serie_diaria(
-            db, periodo=periodo or "mes", desde=desde, hasta=hasta
+            db,
+            periodo=periodo or "mes",
+            desde=desde,
+            hasta=hasta,
+            id_sesion_demo=usuario.id_sesion_demo,
         )
     except ErrorDeProducto as error:
         raise _error(error) from error
@@ -89,6 +97,7 @@ def mas_vendidos(
             hasta=hasta,
             ordenar_por=ordenar_por,
             limite=limite,
+            id_sesion_demo=usuario.id_sesion_demo,
         )
     except ErrorDeProducto as error:
         raise _error(error) from error
@@ -106,7 +115,11 @@ def medios_pago(
     """Cuanto entro por cada forma de cobro (RF-H03)."""
     try:
         datos = reportes.por_medio_de_pago(
-            db, periodo=periodo, desde=desde, hasta=hasta
+            db,
+            periodo=periodo,
+            desde=desde,
+            hasta=hasta,
+            id_sesion_demo=usuario.id_sesion_demo,
         )
     except ErrorDeProducto as error:
         raise _error(error) from error
@@ -124,7 +137,11 @@ def categorias(
     """Cuanto se vendio de cada rubro (RF-H03)."""
     try:
         datos = reportes.por_categoria(
-            db, periodo=periodo, desde=desde, hasta=hasta
+            db,
+            periodo=periodo,
+            desde=desde,
+            hasta=hasta,
+            id_sesion_demo=usuario.id_sesion_demo,
         )
     except ErrorDeProducto as error:
         raise _error(error) from error
@@ -142,7 +159,11 @@ def compras(
     """Cuanto se gasto en mercaderia."""
     try:
         datos = reportes.compras_por_periodo(
-            db, periodo=periodo, desde=desde, hasta=hasta
+            db,
+            periodo=periodo,
+            desde=desde,
+            hasta=hasta,
+            id_sesion_demo=usuario.id_sesion_demo,
         )
     except ErrorDeProducto as error:
         raise _error(error) from error
@@ -165,7 +186,12 @@ def rentabilidad(
     """
     try:
         datos = reportes.rentabilidad(
-            db, periodo=periodo, desde=desde, hasta=hasta, limite=limite
+            db,
+            periodo=periodo,
+            desde=desde,
+            hasta=hasta,
+            id_sesion_demo=usuario.id_sesion_demo,
+            limite=limite,
         )
     except ErrorDeProducto as error:
         raise _error(error) from error
@@ -190,7 +216,12 @@ def exportar(
     try:
         if reporte == "mas-vendidos":
             datos = reportes.mas_vendidos(
-                db, periodo=periodo, desde=desde, hasta=hasta, limite=200
+                db,
+                periodo=periodo,
+                desde=desde,
+                hasta=hasta,
+                id_sesion_demo=usuario.id_sesion_demo,
+                limite=200,
             )
             titulo = "Productos mas vendidos"
             encabezados = ["producto", "unidades", "facturado"]
@@ -200,7 +231,11 @@ def exportar(
             ]
         elif reporte == "medios-pago":
             datos = reportes.por_medio_de_pago(
-                db, periodo=periodo, desde=desde, hasta=hasta
+                db,
+                periodo=periodo,
+                desde=desde,
+                hasta=hasta,
+                id_sesion_demo=usuario.id_sesion_demo,
             )
             titulo = "Ventas por medio de pago"
             encabezados = ["medio", "ventas", "total"]
@@ -210,7 +245,11 @@ def exportar(
             ]
         else:
             datos = reportes.por_categoria(
-                db, periodo=periodo, desde=desde, hasta=hasta
+                db,
+                periodo=periodo,
+                desde=desde,
+                hasta=hasta,
+                id_sesion_demo=usuario.id_sesion_demo,
             )
             titulo = "Ventas por categoria"
             encabezados = ["categoria", "unidades", "total"]

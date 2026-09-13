@@ -64,6 +64,9 @@ def registrar(
         id_entidad=str(id_entidad) if id_entidad is not None else None,
         detalle=_limpiar_detalle(detalle),
         ip=ip,
+        # La linea queda en la particion de quien actua: una accion hecha
+        # dentro de un sandbox muere con el.
+        id_sesion_demo=usuario.id_sesion_demo if usuario else None,
     )
     db.add(linea)
     db.flush()
@@ -80,9 +83,14 @@ def listar(
     hasta: date | None = None,
     desplazamiento: int = 0,
     limite: int = 25,
+    id_sesion_demo: str | None = None,
 ) -> tuple[list[Auditoria], int]:
     """Historial de auditoria, filtrable (RF-I04)."""
-    consulta: Select = select(Auditoria)
+    consulta: Select = select(Auditoria).where(
+        Auditoria.id_sesion_demo.is_(None)
+        if id_sesion_demo is None
+        else Auditoria.id_sesion_demo == id_sesion_demo
+    )
 
     if accion:
         consulta = consulta.where(Auditoria.accion == accion)

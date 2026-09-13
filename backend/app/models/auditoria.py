@@ -40,3 +40,11 @@ class Auditoria(Base):
         server_default=func.now(),
         index=True,
     )
+    # Sin particion, el panel de auditoria de un sandbox mostraria los
+    # correos de las personas reales, y la limpieza de la demo dejaria
+    # lineas huerfanas.
+    id_sesion_demo: Mapped[str | None] = mapped_column(
+        ForeignKey("sesiones_demo.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )

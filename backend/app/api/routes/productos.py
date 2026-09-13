@@ -87,6 +87,7 @@ def listar(
         desplazamiento=(pagina - 1) * limite,
         limite=limite,
         orden=orden,
+        id_sesion_demo=usuario.id_sesion_demo,
     )
     return Pagina[ProductoSalida](
         items=[_a_salida(p, usuario) for p in items],
@@ -104,7 +105,9 @@ def por_codigo(
 ) -> ProductoSalida:
     """Busqueda por codigo de barras, para el lector (RF-E02)."""
     try:
-        producto = servicio.buscar_por_codigo(db, codigo)
+        producto = servicio.buscar_por_codigo(
+            db, codigo, usuario.id_sesion_demo
+        )
     except servicio.ErrorDeProducto as error:
         raise _error(error) from error
     return _a_salida(producto, usuario)
@@ -149,6 +152,7 @@ def exportar(
         incluir_inactivos=incluir_inactivos,
         desplazamiento=0,
         limite=exportacion_maxima(),
+        id_sesion_demo=usuario.id_sesion_demo,
     )
 
     encabezados = list(ENCABEZADOS_EXPORTACION)
@@ -203,7 +207,9 @@ def obtener(
 ) -> ProductoSalida:
     """Ficha de un producto."""
     try:
-        producto = servicio.obtener_producto(db, id_producto)
+        producto = servicio.obtener_producto(
+            db, id_producto, usuario.id_sesion_demo
+        )
     except servicio.ErrorDeProducto as error:
         raise _error(error) from error
     return _a_salida(producto, usuario)
@@ -219,7 +225,9 @@ def crear(
 ) -> ProductoSalida:
     """Alta de producto. Propietario o encargado (RF-C01)."""
     try:
-        producto = servicio.crear_producto(db, datos.model_dump())
+        producto = servicio.crear_producto(
+            db, datos.model_dump(), id_sesion_demo=usuario.id_sesion_demo
+        )
     except servicio.ErrorDeProducto as error:
         raise _error(error) from error
     db.commit()
@@ -236,7 +244,10 @@ def actualizar(
     """Edicion de producto. Propietario o encargado (RF-C01)."""
     try:
         producto = servicio.actualizar_producto(
-            db, id_producto, datos.model_dump()
+            db,
+            id_producto,
+            datos.model_dump(),
+            id_sesion_demo=usuario.id_sesion_demo,
         )
     except servicio.ErrorDeProducto as error:
         raise _error(error) from error
@@ -252,7 +263,9 @@ def eliminar(
 ) -> MensajeSalida:
     """Baja de producto. Propietario o encargado (RF-C09)."""
     try:
-        _, borrado = servicio.eliminar_producto(db, id_producto)
+        _, borrado = servicio.eliminar_producto(
+            db, id_producto, usuario.id_sesion_demo
+        )
     except servicio.ErrorDeProducto as error:
         raise _error(error) from error
     db.commit()
@@ -274,7 +287,9 @@ def reactivar(
 ) -> ProductoSalida:
     """Vuelve a poner en circulacion un producto dado de baja."""
     try:
-        producto = servicio.reactivar_producto(db, id_producto)
+        producto = servicio.reactivar_producto(
+            db, id_producto, usuario.id_sesion_demo
+        )
     except servicio.ErrorDeProducto as error:
         raise _error(error) from error
     db.commit()
@@ -339,7 +354,10 @@ def previsualizar_importacion(
     """Dice que pasaria con cada fila, sin escribir nada (RF-C10)."""
     filas = _leer_archivo(archivo)
     resultado = importacion.analizar(
-        db, filas, crear_categorias=crear_categorias
+        db,
+        filas,
+        crear_categorias=crear_categorias,
+        id_sesion_demo=usuario.id_sesion_demo,
     )
     # Nada que deshacer: analizar no escribe. El rollback esta por si
     # alguna lectura abrio una transaccion.
@@ -362,7 +380,11 @@ def importar(
     filas = _leer_archivo(archivo)
     try:
         resultado = importacion.aplicar(
-            db, filas, usuario, crear_categorias=crear_categorias
+            db,
+            filas,
+            usuario,
+            crear_categorias=crear_categorias,
+            id_sesion_demo=usuario.id_sesion_demo,
         )
     except servicio.ErrorDeProducto as error:
         db.rollback()

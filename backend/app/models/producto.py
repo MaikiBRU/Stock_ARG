@@ -12,7 +12,12 @@ from sqlalchemy import (
     Numeric,
     String,
 )
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import (
+    Mapped,
+    mapped_column,
+    object_session,
+    relationship,
+)
 
 from app.core import ajustes_vivos
 from app.db.base import (
@@ -115,9 +120,10 @@ class Producto(MarcaDeTiempo, Base):
     def estado_stock(self) -> str:
         """Nivel de stock: "bajo", "medio" u "ok" (RF-D01)."""
         porcentaje = self.porcentaje_stock
-        if porcentaje <= ajustes_vivos.entero("stock_umbral_bajo"):
+        sesion = object_session(self)
+        if porcentaje <= ajustes_vivos.entero("stock_umbral_bajo", sesion):
             return "bajo"
-        if porcentaje <= ajustes_vivos.entero("stock_umbral_medio"):
+        if porcentaje <= ajustes_vivos.entero("stock_umbral_medio", sesion):
             return "medio"
         return "ok"
 

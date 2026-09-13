@@ -287,5 +287,5 @@ def guardar_configuracion(
     db.flush()
 
     vigentes = leer_configuracion(db, id_sesion_demo)
-    ajustes_vivos.fijar(vigentes)
+    ajustes_vivos.fijar(db, vigentes)
     return vigentes

@@ -50,7 +50,7 @@ def resumen(
     usuario: Usuario = Depends(obtener_usuario_actual),
 ) -> ResumenStock:
     """Cuantos productos hay en cada estado (RF-D02)."""
-    return ResumenStock(**servicio.resumen_de_stock(db))
+    return ResumenStock(**servicio.resumen_de_stock(db, usuario.id_sesion_demo))
 
 
 @router.get("/movimientos", response_model=Pagina[MovimientoSalida])
@@ -73,6 +73,7 @@ def listar_movimientos(
         hasta=hasta,
         desplazamiento=(pagina - 1) * limite,
         limite=limite,
+        id_sesion_demo=usuario.id_sesion_demo,
     )
     return Pagina[MovimientoSalida](
         items=[MovimientoSalida.model_validate(m) for m in items],
@@ -101,6 +102,7 @@ def registrar_movimiento(
             cantidad=datos.cantidad,
             usuario=usuario,
             nota=datos.nota,
+            id_sesion_demo=usuario.id_sesion_demo,
         )
     except ErrorDeProducto as error:
         db.rollback()
@@ -128,6 +130,7 @@ def registrar_baja(
             motivo=datos.motivo,
             usuario=usuario,
             detalle=datos.detalle,
+            id_sesion_demo=usuario.id_sesion_demo,
         )
     except ErrorDeProducto as error:
         db.rollback()
@@ -168,6 +171,7 @@ def exportar_movimientos(
         hasta=hasta,
         desplazamiento=0,
         limite=MAX_FILAS_EXPORTACION,
+        id_sesion_demo=usuario.id_sesion_demo,
     )
 
     # Se resuelven los nombres de una sola vez, en lugar de una consulta

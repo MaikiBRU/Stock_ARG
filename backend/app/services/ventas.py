@@ -304,13 +304,13 @@ def registrar(
             (
                 bruto + descontado  # importe antes de descontar
             )
-            * Decimal(ajustes_vivos.entero("descuento_max_vendedor"))
+            * Decimal(ajustes_vivos.entero("descuento_max_vendedor", db))
             / 100
         )
         if descontado > tope.quantize(CENTAVO):
             raise ErrorDeVenta(
                 "El descuento supera el maximo permitido para su rol "
-                f"({ajustes_vivos.entero('descuento_max_vendedor')}%). "
+                f"({ajustes_vivos.entero('descuento_max_vendedor', db)}%). "
                 "Pida autorizacion a un encargado.",
                 "descuento_no_permitido",
             )

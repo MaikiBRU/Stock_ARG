@@ -2,20 +2,24 @@
 
 El problema que resuelve: los umbrales de stock, la ventana de aviso de
 vencimiento y el tope de descuento se pueden editar desde la pantalla de
-configuracion, pero quien los consume no puede consultar la base en ese
-punto -- una propiedad de un modelo no tiene sesion. Si cada lado usara
-su propia fuente, guardar un umbral devolveria 200 y el panel seguiria
-calculando con el valor viejo.
+configuracion, pero quien los consume no siempre puede consultar la base
+en ese punto -- una propiedad de un modelo no recibe la sesion. Si cada
+lado usara su propia fuente, guardar un umbral devolveria 200 y el panel
+seguiria calculando con el valor viejo.
 
-Aca vive la unica fuente de verdad: una cache por proceso que se refresca
-en cada peticion autenticada. El valor del entorno queda como respaldo
-para cuando todavia no se guardo nada.
+Los valores viajan en la sesion de base de la peticion y no en el
+proceso. Con una cache global, dos peticiones simultaneas se pisarian:
+el propietario de un sandbox de la demo podria subir el tope de
+descuento y ese valor le llegaria a un vendedor de la aplicacion real
+que cobra en el mismo instante. Cada peticion tiene su propia sesion, asi
+que cada una ve solo los parametros de su particion.
 
+El valor del entorno queda como respaldo para cuando no se guardo nada.
 Este modulo no importa modelos a proposito: si lo hiciera, el modelo que
 lo consulta cerraria un ciclo de imports.
 """
 
-from threading import Lock
+from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 
@@ -28,33 +32,24 @@ RESPALDOS = {
     "descuento_max_vendedor": "descuento_max_vendedor_porcentaje",
 }
 
-_valores: dict[str, str] = {}
-_candado = Lock()
+CLAVE_EN_SESION = "ajustes_vivos"
 
 
-def fijar(valores: dict[str, str]) -> None:
-    """Reemplaza la cache con lo que hay guardado en la base."""
-    with _candado:
-        _valores.clear()
-        _valores.update(valores)
+def fijar(sesion: Session, valores: dict[str, str]) -> None:
+    """Deja en la sesion los parametros guardados de su particion."""
+    sesion.info[CLAVE_EN_SESION] = dict(valores)
 
 
-def limpiar() -> None:
-    """Vacia la cache. La usan las pruebas entre casos."""
-    with _candado:
-        _valores.clear()
-
-
-def entero(clave: str) -> int:
+def entero(clave: str, sesion: Session | None) -> int:
     """Valor numerico del parametro, o el del entorno si no se guardo.
 
-    Un valor guardado ilegible no puede tumbar el calculo: se cae al
-    respaldo, que siempre es un entero validado por la configuracion.
+    Sin sesion, o con una sesion que no cargo parametros, vale el
+    respaldo. Un valor guardado ilegible tampoco puede tumbar el calculo:
+    se cae al respaldo, que siempre es un entero validado.
     """
     respaldo = getattr(get_settings(), RESPALDOS[clave])
-
-    with _candado:
-        guardado = _valores.get(clave)
+    guardados = sesion.info.get(CLAVE_EN_SESION, {}) if sesion else {}
+    guardado = guardados.get(clave)
 
     if guardado is None:
         return respaldo
@@ -62,9 +57,3 @@ def entero(clave: str) -> int:
         return int(guardado)
     except (TypeError, ValueError):
         return respaldo
-
-
-def texto(clave: str, por_defecto: str = "") -> str:
-    """Valor de texto del parametro."""
-    with _candado:
-        return _valores.get(clave, por_defecto)

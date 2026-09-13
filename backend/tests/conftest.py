@@ -17,18 +17,11 @@ from sqlalchemy.orm import sessionmaker  # noqa: E402
 from sqlalchemy.pool import StaticPool  # noqa: E402
 
 from app.core import ajustes_vivos  # noqa: E402
+from app.db import particion  # noqa: E402
 from app.db.base import Base  # noqa: E402
 from app.db.session import get_db  # noqa: E402
 from app.main import crear_app  # noqa: E402
 from app.models import *  # noqa: E402,F401,F403
-
-
-@pytest.fixture(autouse=True)
-def _ajustes_limpios():
-    """La cache de parametros no se arrastra entre pruebas."""
-    ajustes_vivos.limpiar()
-    yield
-    ajustes_vivos.limpiar()
 
 
 @pytest.fixture
@@ -69,7 +62,18 @@ def db(engine):
 def client(db):
     """Cliente HTTP con la base de la prueba inyectada."""
     app = crear_app()
-    app.dependency_overrides[get_db] = lambda: db
+
+    def _db_de_la_prueba():
+        # En produccion cada peticion abre su sesion. Aca se comparte la
+        # de la prueba, asi que se le quita lo que la peticion le dejo
+        # para que las verificaciones posteriores vean todas las filas.
+        try:
+            yield db
+        finally:
+            particion.liberar(db)
+            db.info.pop(ajustes_vivos.CLAVE_EN_SESION, None)
+
+    app.dependency_overrides[get_db] = _db_de_la_prueba
     with TestClient(app) as c:
         yield c
     app.dependency_overrides.clear()

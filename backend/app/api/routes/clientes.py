@@ -60,6 +60,7 @@ def listar(
         incluir_inactivos=incluir_inactivos,
         desplazamiento=(pagina - 1) * limite,
         limite=limite,
+        id_sesion_demo=usuario.id_sesion_demo,
     )
     return Pagina[ClienteSalida](
         items=[ClienteSalida.model_validate(c) for c in items],
@@ -133,6 +134,7 @@ def exportar(
         incluir_inactivos=incluir_inactivos,
         desplazamiento=0,
         limite=5000,
+        id_sesion_demo=usuario.id_sesion_demo,
     )
 
     encabezados = [
@@ -185,7 +187,9 @@ def previsualizar_importacion(
 ) -> ImportacionSalida:
     """Dice que pasaria con cada fila, sin escribir nada (RF-F05)."""
     filas = _leer(archivo, "cliente")
-    resultado = importacion.analizar_contactos(db, filas, "cliente")
+    resultado = importacion.analizar_contactos(
+        db, filas, "cliente", id_sesion_demo=usuario.id_sesion_demo
+    )
     db.rollback()
     return _salida(resultado)
 
@@ -203,7 +207,9 @@ def importar(
     """Importa clientes y saltea las filas con error (RF-F05)."""
     filas = _leer(archivo, "cliente")
     try:
-        resultado = importacion.aplicar_contactos(db, filas, "cliente")
+        resultado = importacion.aplicar_contactos(
+            db, filas, "cliente", id_sesion_demo=usuario.id_sesion_demo
+        )
     except ErrorDeProducto as error:
         db.rollback()
         raise _error(error) from error
@@ -219,7 +225,7 @@ def obtener(
 ) -> ClienteSalida:
     """Ficha de un cliente."""
     try:
-        cliente = servicio.obtener(db, id_cliente)
+        cliente = servicio.obtener(db, id_cliente, usuario.id_sesion_demo)
     except ErrorDeProducto as error:
         raise _error(error) from error
     return ClienteSalida.model_validate(cliente)
@@ -233,7 +239,9 @@ def compras(
 ) -> ResumenComprasSalida:
     """Cuanto y cuando compro un cliente (RF-F03)."""
     try:
-        resumen = servicio.resumen_de_compras(db, id_cliente)
+        resumen = servicio.resumen_de_compras(
+            db, id_cliente, usuario.id_sesion_demo
+        )
     except ErrorDeProducto as error:
         raise _error(error) from error
     return ResumenComprasSalida(**resumen)
@@ -249,7 +257,9 @@ def crear(
 ) -> ClienteSalida:
     """Alta de cliente. Propietario o encargado (RF-F01)."""
     try:
-        cliente = servicio.crear(db, datos.model_dump(mode="json"))
+        cliente = servicio.crear(
+            db, datos.model_dump(mode="json"), usuario.id_sesion_demo
+        )
     except ErrorDeProducto as error:
         raise _error(error) from error
     db.commit()
@@ -266,7 +276,10 @@ def actualizar(
     """Edicion de cliente. Propietario o encargado (RF-F01)."""
     try:
         cliente = servicio.actualizar(
-            db, id_cliente, datos.model_dump(mode="json")
+            db,
+            id_cliente,
+            datos.model_dump(mode="json"),
+            id_sesion_demo=usuario.id_sesion_demo,
         )
     except ErrorDeProducto as error:
         raise _error(error) from error
@@ -282,7 +295,7 @@ def eliminar(
 ) -> MensajeSalida:
     """Baja de cliente. Propietario o encargado."""
     try:
-        _, borrado = servicio.eliminar(db, id_cliente)
+        _, borrado = servicio.eliminar(db, id_cliente, usuario.id_sesion_demo)
     except ErrorDeProducto as error:
         raise _error(error) from error
     db.commit()

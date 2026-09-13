@@ -55,7 +55,7 @@ def proximos_a_vencer(
     ventana = (
         dias
         if dias is not None
-        else ajustes_vivos.entero("dias_aviso_vencimiento")
+        else ajustes_vivos.entero("dias_aviso_vencimiento", db)
     )
     hoy = datetime.now(UTC).date()
 
@@ -128,7 +128,7 @@ def armar(
         "mas_vendidos_del_mes": top["ranking"],
         "serie_ventas": serie,
         "dias_aviso_vencimiento": ajustes_vivos.entero(
-            "dias_aviso_vencimiento"
+            "dias_aviso_vencimiento", db
         ),
     }
 

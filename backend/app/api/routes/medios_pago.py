@@ -32,7 +32,11 @@ def listar(
     """Medios habilitados. Los necesita cualquiera que cobre."""
     return [
         MedioPagoSalida.model_validate(m)
-        for m in servicio.listar(db, solo_activos=solo_activos)
+        for m in servicio.listar(
+            db,
+            solo_activos=solo_activos,
+            id_sesion_demo=usuario.id_sesion_demo,
+        )
     ]
 
 
@@ -46,7 +50,7 @@ def sembrar(
     usuario: Usuario = Depends(exigir_administracion),
 ) -> list[MedioPagoSalida]:
     """Carga los medios habituales en un comercio recien instalado."""
-    creados = servicio.sembrar_iniciales(db)
+    creados = servicio.sembrar_iniciales(db, usuario.id_sesion_demo)
     db.commit()
     return [MedioPagoSalida.model_validate(m) for m in creados]
 
@@ -61,7 +65,12 @@ def crear(
 ) -> MedioPagoSalida:
     """Alta de medio de cobro. Solo el propietario (RF-I06)."""
     try:
-        medio = servicio.crear(db, datos.nombre, datos.es_efectivo)
+        medio = servicio.crear(
+            db,
+            datos.nombre,
+            datos.es_efectivo,
+            id_sesion_demo=usuario.id_sesion_demo,
+        )
     except ErrorDeProducto as error:
         raise _error(error) from error
     db.commit()
@@ -76,7 +85,9 @@ def habilitar(
 ) -> MedioPagoSalida:
     """Vuelve a habilitar un medio de cobro."""
     try:
-        medio = servicio.cambiar_estado(db, id_medio, activo=True)
+        medio = servicio.cambiar_estado(
+            db, id_medio, activo=True, id_sesion_demo=usuario.id_sesion_demo
+        )
     except ErrorDeProducto as error:
         raise _error(error) from error
     db.commit()
@@ -91,7 +102,9 @@ def deshabilitar(
 ) -> MedioPagoSalida:
     """Deshabilita un medio de cobro, sin borrarlo."""
     try:
-        medio = servicio.cambiar_estado(db, id_medio, activo=False)
+        medio = servicio.cambiar_estado(
+            db, id_medio, activo=False, id_sesion_demo=usuario.id_sesion_demo
+        )
     except ErrorDeProducto as error:
         raise _error(error) from error
     db.commit()
