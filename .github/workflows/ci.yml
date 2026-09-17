@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, web]
+    branches: [main]
   pull_request:
 
 jobs:
@@ -10,9 +10,9 @@ jobs:
     name: Backend
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip
@@ -36,11 +36,22 @@ jobs:
         working-directory: backend
         run: alembic upgrade head
 
+  imagen:
+    name: La imagen de la API compila
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      # La imagen es lo que corre en produccion. Sin este paso, un
+      # Dockerfile roto solo se descubre al desplegar.
+      - name: Construir la imagen
+        run: docker build backend/
+
   secretos:
     name: Sin secretos en la historia
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 

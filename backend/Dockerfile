@@ -19,7 +19,8 @@ COPY app ./app
 
 # Sin esto el proceso corre como root: una ejecucion de codigo
 # arbitrario dentro de la API seria root dentro del contenedor.
-RUN useradd --system --no-create-home --uid 1001 stockarg \n    && chown -R stockarg:stockarg /app
+RUN useradd --system --no-create-home --uid 1001 stockarg \
+    && chown -R stockarg:stockarg /app
 USER stockarg
 
 EXPOSE 8000
