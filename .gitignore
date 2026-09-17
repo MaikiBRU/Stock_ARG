@@ -23,6 +23,11 @@ release/
 *.spec
 *.zip
 
+# Restos de la version de escritorio: quedan en la maquina, fuera del
+# repositorio, porque esta version la reemplaza.
+Assets/
+docs/
+
 # Editor
 .vscode/
 
