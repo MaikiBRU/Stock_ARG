@@ -84,7 +84,7 @@ class AuditoriaSalida(BaseModel):
     entidad: str
     id_entidad: str | None
     detalle: dict[str, Any] | None
-    ip: str | None
+    ip_hash: str | None
     fecha_hora: datetime
 
 

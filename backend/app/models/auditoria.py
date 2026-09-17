@@ -33,7 +33,10 @@ class Auditoria(Base):
     entidad: Mapped[str] = mapped_column(String(40), nullable=False)
     id_entidad: Mapped[str | None] = mapped_column(String(40), nullable=True)
     detalle: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
-    ip: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    # La direccion se guarda hasheada, igual que en las sesiones de la
+    # demo: alcanza para reconocer que dos acciones vinieron del mismo
+    # lugar, sin conservar de donde se conecta cada persona.
+    ip_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
     fecha_hora: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,

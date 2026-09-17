@@ -12,6 +12,7 @@ from sqlalchemy import Select, func, select
 from sqlalchemy.orm import Session
 
 from app.core import tiempo
+from app.core.security import hash_opaco
 from app.models import Auditoria, Usuario
 
 # Nunca entra al detalle: son los nombres de campo que, si se colaran,
@@ -64,7 +65,7 @@ def registrar(
         entidad=entidad,
         id_entidad=str(id_entidad) if id_entidad is not None else None,
         detalle=_limpiar_detalle(detalle),
-        ip=ip,
+        ip_hash=hash_opaco(ip) if ip else None,
         # La linea queda en la particion de quien actua: una accion hecha
         # dentro de un sandbox muere con el.
         id_sesion_demo=usuario.id_sesion_demo if usuario else None,
