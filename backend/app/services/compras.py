@@ -13,6 +13,7 @@ from decimal import Decimal
 from sqlalchemy import Select, func, select
 from sqlalchemy.orm import Session
 
+from app.core import tiempo
 from app.models import (
     Compra,
     CompraItem,
@@ -114,8 +115,8 @@ def registrar(
             "proveedor_inactivo",
         )
 
-    fecha = fecha or _ahora().date()
-    if fecha > _ahora().date():
+    fecha = fecha or tiempo.hoy()
+    if fecha > tiempo.hoy():
         # Una compra con fecha futura descuadra cualquier reporte por
         # periodo y no corresponde a mercaderia que ya entro.
         raise ErrorDeCompra(

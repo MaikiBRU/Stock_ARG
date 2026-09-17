@@ -6,12 +6,12 @@ de ventas, tarde o temprano diria un numero distinto al del reporte y
 nadie sabria cual de los dos creer.
 """
 
-from datetime import UTC, date, datetime, timedelta
+from datetime import date, timedelta
 
 from sqlalchemy import Select, select
 from sqlalchemy.orm import Session
 
-from app.core import ajustes_vivos
+from app.core import ajustes_vivos, tiempo
 from app.models import Producto
 from app.services import reportes
 from app.services import stock as servicio_stock
@@ -57,7 +57,7 @@ def proximos_a_vencer(
         if dias is not None
         else ajustes_vivos.entero("dias_aviso_vencimiento", db)
     )
-    hoy = datetime.now(UTC).date()
+    hoy = tiempo.hoy()
 
     return list(
         db.scalars(
@@ -81,7 +81,7 @@ def vencidos(
     Sin stock no hay nada que dar de baja, asi que no tiene sentido
     pedirle una accion a alguien que no puede hacer nada.
     """
-    hoy: date = datetime.now(UTC).date()
+    hoy: date = tiempo.hoy()
     return list(
         db.scalars(
             _productos(id_sesion_demo)
@@ -118,7 +118,7 @@ def armar(
     resumen = servicio_stock.resumen_de_stock(db, id_sesion_demo)
 
     panel = {
-        "fecha": datetime.now(UTC).date(),
+        "fecha": tiempo.hoy(),
         "ventas_del_dia": del_dia,
         "medios_de_pago": medios["detalle"],
         "resumen_stock": resumen,

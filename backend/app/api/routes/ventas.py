@@ -1,6 +1,6 @@
 """Endpoints del punto de venta (modulo E)."""
 
-from datetime import date, datetime, time
+from datetime import date
 from decimal import Decimal
 
 from fastapi import (
@@ -18,6 +18,7 @@ from app.api.deps import (
     exigir_gestion,
     obtener_usuario_actual,
 )
+from app.core import tiempo
 from app.db.session import get_db
 from app.models import EstadoVenta, Usuario, Venta
 from app.schemas.comunes import LIMITE_MAXIMO, LIMITE_POR_DEFECTO, Pagina
@@ -91,8 +92,8 @@ def listar(
 
     items, total = servicio.listar(
         db,
-        desde=datetime.combine(desde, time.min) if desde else None,
-        hasta=datetime.combine(hasta, time.max) if hasta else None,
+        desde=tiempo.inicio_del_dia(desde) if desde else None,
+        hasta=tiempo.fin_del_dia(hasta) if hasta else None,
         id_usuario=id_usuario,
         id_cliente=id_cliente,
         id_medio_pago=id_medio_pago,
@@ -122,8 +123,8 @@ def exportar(
     """Descarga el historial filtrado (RF-H08)."""
     items, _ = servicio.listar(
         db,
-        desde=datetime.combine(desde, time.min) if desde else None,
-        hasta=datetime.combine(hasta, time.max) if hasta else None,
+        desde=tiempo.inicio_del_dia(desde) if desde else None,
+        hasta=tiempo.fin_del_dia(hasta) if hasta else None,
         estado=estado,
         desplazamiento=0,
         limite=MAX_FILAS_EXPORTACION,
@@ -143,7 +144,9 @@ def exportar(
     filas: list[list[object]] = [
         [
             v.id,
-            v.fecha_hora.strftime("%d/%m/%Y %H:%M") if v.fecha_hora else None,
+            tiempo.en_zona(v.fecha_hora).strftime("%d/%m/%Y %H:%M")
+            if v.fecha_hora
+            else None,
             v.cantidad_articulos,
             v.descuento,
             v.total,

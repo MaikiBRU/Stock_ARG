@@ -1,10 +1,11 @@
 """Movimientos de inventario y bajas (modulo D)."""
 
-from datetime import date, datetime
+from datetime import date
 
 from sqlalchemy import Select, func, select
 from sqlalchemy.orm import Session
 
+from app.core import tiempo
 from app.models import (
     BajaProducto,
     MotivoBaja,
@@ -181,13 +182,11 @@ def listar_movimientos(
         consulta = consulta.where(MovimientoStock.tipo == tipo)
     if desde is not None:
         consulta = consulta.where(
-            MovimientoStock.fecha_hora
-            >= datetime.combine(desde, datetime.min.time())
+            MovimientoStock.fecha_hora >= tiempo.inicio_del_dia(desde)
         )
     if hasta is not None:
         consulta = consulta.where(
-            MovimientoStock.fecha_hora
-            <= datetime.combine(hasta, datetime.max.time())
+            MovimientoStock.fecha_hora <= tiempo.fin_del_dia(hasta)
         )
 
     total = db.scalar(select(func.count()).select_from(consulta.subquery()))

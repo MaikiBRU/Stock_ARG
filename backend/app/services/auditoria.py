@@ -5,12 +5,13 @@ usuario ademas de su id: si la cuenta se elimina mas adelante, la linea
 tiene que seguir diciendo quien fue.
 """
 
-from datetime import date, datetime, time
+from datetime import date
 from typing import Any
 
 from sqlalchemy import Select, func, select
 from sqlalchemy.orm import Session
 
+from app.core import tiempo
 from app.models import Auditoria, Usuario
 
 # Nunca entra al detalle: son los nombres de campo que, si se colaran,
@@ -100,11 +101,11 @@ def listar(
         consulta = consulta.where(Auditoria.id_usuario == id_usuario)
     if desde is not None:
         consulta = consulta.where(
-            Auditoria.fecha_hora >= datetime.combine(desde, time.min)
+            Auditoria.fecha_hora >= tiempo.inicio_del_dia(desde)
         )
     if hasta is not None:
         consulta = consulta.where(
-            Auditoria.fecha_hora <= datetime.combine(hasta, time.max)
+            Auditoria.fecha_hora <= tiempo.fin_del_dia(hasta)
         )
 
     total = db.scalar(select(func.count()).select_from(consulta.subquery()))

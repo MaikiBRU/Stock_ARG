@@ -6,7 +6,8 @@ desde cualquier equipo, y el PDF no depende de como imprime cada uno.
 
 import csv
 import io
-from datetime import UTC, datetime
+
+from app.core import tiempo
 
 # Excel en español espera punto y coma, y sin el BOM abre los acentos
 # mal. Las dos cosas juntas hacen que el archivo se abra de un doble
@@ -101,7 +102,7 @@ def a_pdf(
         Paragraph(titulo, estilos["Title"]),
         Paragraph(
             "StockARG &mdash; "
-            + datetime.now(UTC).strftime("%d/%m/%Y %H:%M UTC"),
+            + tiempo.en_zona(tiempo.ahora()).strftime("%d/%m/%Y %H:%M"),
             estilos["Normal"],
         ),
         Spacer(1, 6 * mm),
@@ -145,5 +146,5 @@ def a_pdf(
 
 def nombre_de_archivo(base: str, extension: str) -> str:
     """Nombre con la fecha, para que no se pisen las descargas."""
-    marca = datetime.now(UTC).strftime("%Y%m%d-%H%M")
+    marca = tiempo.en_zona(tiempo.ahora()).strftime("%Y%m%d-%H%M")
     return f"{base}-{marca}.{extension}"

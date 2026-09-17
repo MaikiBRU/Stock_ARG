@@ -11,5 +11,8 @@ bcrypt==5.0.0
 python-multipart==0.0.32
 email-validator==2.3.0
 reportlab==5.0.1
+# Base de zonas horarias: Windows no trae una, y la imagen slim tampoco
+# la garantiza.
+tzdata==2026.4
 sendgrid==6.11.0
 google-auth==2.35.0

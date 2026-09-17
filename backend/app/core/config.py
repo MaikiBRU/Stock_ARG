@@ -6,6 +6,7 @@ esta publicada en el repositorio.
 """
 
 from functools import lru_cache
+from zoneinfo import ZoneInfo
 
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -39,6 +40,10 @@ class Settings(BaseSettings):
 
     app_name: str = "StockARG"
     app_version: str = "2.0.0"
+    # Zona del comercio (RNF-15). Los instantes se guardan en UTC; esto
+    # decide que dia es "hoy" en el panel, los reportes y los avisos de
+    # vencimiento.
+    zona_horaria: str = "America/Argentina/Buenos_Aires"
 
     # "development" o "production". Solo decide que se expone: los
     # controles de seguridad se aplican en ambos, de modo que un valor
@@ -111,6 +116,20 @@ class Settings(BaseSettings):
     demo_max_ventas: int = 800
     demo_max_importaciones: int = 15
     demo_max_exportaciones: int = 40
+
+    @field_validator("zona_horaria")
+    @classmethod
+    def _validar_zona_horaria(cls, valor: str) -> str:
+        """Una zona desconocida dejaria todas las fechas en falso."""
+        try:
+            ZoneInfo(valor)
+        except (KeyError, ValueError, OSError) as error:
+            raise ValueError(
+                f"zona_horaria desconocida: {valor!r}. Se espera un "
+                "nombre de la base de zonas, por ejemplo "
+                "America/Argentina/Buenos_Aires."
+            ) from error
+        return valor
 
     @field_validator("secret_key")
     @classmethod

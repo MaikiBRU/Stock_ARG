@@ -9,12 +9,13 @@ calendario: asi el reporte de los ultimos 30 dias dice lo mismo sin
 importar el dia en que se lo pida.
 """
 
-from datetime import UTC, date, datetime, time, timedelta
+from datetime import date, timedelta
 from decimal import Decimal
 
 from sqlalchemy import Select, desc, func, select
 from sqlalchemy.orm import Session
 
+from app.core import tiempo
 from app.models import (
     Categoria,
     Compra,
@@ -46,7 +47,7 @@ def resolver_rango(
     Un rango explicito gana sobre el periodo: si alguien manda las dos
     cosas, lo que quiso decir son las fechas que escribio.
     """
-    hoy = datetime.now(UTC).date()
+    hoy = tiempo.hoy()
 
     if desde is not None or hasta is not None:
         inicio = desde or hoy
@@ -73,8 +74,8 @@ def _ventas_del_rango(
     """Ventas registradas dentro del rango, sin las anuladas."""
     return select(Venta).where(
         Venta.estado == EstadoVenta.REGISTRADA,
-        Venta.fecha_hora >= datetime.combine(inicio, time.min),
-        Venta.fecha_hora <= datetime.combine(fin, time.max),
+        Venta.fecha_hora >= tiempo.inicio_del_dia(inicio),
+        Venta.fecha_hora <= tiempo.fin_del_dia(fin),
         Venta.id_sesion_demo.is_(None)
         if id_sesion_demo is None
         else Venta.id_sesion_demo == id_sesion_demo,
@@ -141,22 +142,20 @@ def serie_diaria(
     inicio, fin = resolver_rango(periodo, desde, hasta)
     base = _ventas_del_rango(inicio, fin, id_sesion_demo).subquery()
 
-    filas = db.execute(
-        select(
-            func.date(base.c.fecha_hora).label("dia"),
-            func.count(base.c.id),
-            func.coalesce(func.sum(base.c.total), 0),
-        ).group_by("dia")
-    ).all()
+    # El dia se arma en la zona del comercio y no con func.date, que
+    # agruparia por el dia UTC y partiria en dos la venta de la noche.
+    filas = db.execute(select(base.c.fecha_hora, base.c.total)).all()
 
-    por_dia = {
-        str(dia): (cantidad, _decimal(total)) for dia, cantidad, total in filas
-    }
+    por_dia: dict[date, tuple[int, Decimal]] = {}
+    for fecha_hora, importe in filas:
+        dia = tiempo.en_zona(fecha_hora).date()
+        cantidad, acumulado = por_dia.get(dia, (0, Decimal("0.00")))
+        por_dia[dia] = (cantidad + 1, acumulado + _decimal(importe))
 
     serie: list[dict] = []
     actual = inicio
     while actual <= fin:
-        cantidad, total = por_dia.get(str(actual), (0, Decimal("0.00")))
+        cantidad, total = por_dia.get(actual, (0, Decimal("0.00")))
         serie.append(
             {"fecha": actual, "cantidad_ventas": cantidad, "total": total}
         )

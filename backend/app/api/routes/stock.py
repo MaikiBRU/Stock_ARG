@@ -18,6 +18,7 @@ from app.api.deps import (
     exigir_gestion,
     obtener_usuario_actual,
 )
+from app.core import tiempo
 from app.db.session import get_db
 from app.models import Producto, TipoMovimiento, Usuario
 from app.schemas.comunes import LIMITE_MAXIMO, LIMITE_POR_DEFECTO, Pagina
@@ -196,7 +197,9 @@ def exportar_movimientos(
 
     filas: list[list[object]] = [
         [
-            m.fecha_hora.strftime("%d/%m/%Y %H:%M") if m.fecha_hora else None,
+            tiempo.en_zona(m.fecha_hora).strftime("%d/%m/%Y %H:%M")
+            if m.fecha_hora
+            else None,
             nombres.get(m.id_producto, f"#{m.id_producto}"),
             m.tipo.value,
             m.cantidad,

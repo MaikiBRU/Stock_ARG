@@ -18,6 +18,7 @@ from decimal import ROUND_CEILING, ROUND_HALF_UP, Decimal
 from sqlalchemy import ColumnElement, select, update
 from sqlalchemy.orm import Session
 
+from app.core import tiempo
 from app.models import (
     Categoria,
     Cliente,
@@ -42,12 +43,12 @@ DIAS_DE_HISTORIA = 21
 DIAS_DE_REPOSICION = (DIAS_DE_HISTORIA - 1, 14, 7, 2)
 CENTAVO = Decimal("0.01")
 
-# Horarios en UTC: el local abre de 8 a 21 de Argentina y la mercaderia
-# llega antes de abrir, asi el stock de cada movimiento sigue el orden
-# del reloj.
-HORA_DE_ENTREGA = time(10, 30)
-APERTURA = time(11, 0)
-CIERRE = time(23, 50)
+# Horarios del comercio, en su propia zona: abre de 8 a 21 y la
+# mercaderia llega antes de abrir, asi el stock de cada movimiento sigue
+# el orden del reloj.
+HORA_DE_ENTREGA = time(8, 30)
+APERTURA = time(9, 0)
+CIERRE = time(20, 50)
 
 # Quien cobra, en este orden: el mostrador lo atiende sobre todo la
 # vendedora.
@@ -201,10 +202,15 @@ CATALOGO = (
 Existencia = tuple[Articulo, Producto, Decimal]
 
 
+def _momento(dia: date, hora: time) -> datetime:
+    """Una hora del comercio de ese dia, expresada en UTC."""
+    return datetime.combine(dia, hora, tzinfo=tiempo.zona()).astimezone(UTC)
+
+
 def sembrar(db: Session, id_sesion_demo: str, rng: random.Random) -> Usuario:
     """Llena el sandbox y devuelve a su propietaria."""
-    ahora = datetime.now(UTC)
-    hoy = ahora.date()
+    ahora = tiempo.ahora()
+    hoy = tiempo.hoy()
 
     usuarios = _crear_usuarios(db, id_sesion_demo)
     cajeros = tuple(usuarios[rol] for rol, _ in USUARIOS)
@@ -423,7 +429,7 @@ def _reponer(
             )
         )
 
-    momento = datetime.combine(dia, HORA_DE_ENTREGA, tzinfo=UTC)
+    momento = _momento(dia, HORA_DE_ENTREGA)
     for clave, lineas in pedidos.items():
         compra = servicio_compras.registrar(
             db,
@@ -451,12 +457,12 @@ def _vender_un_dia(
     cajeros: tuple[Usuario, ...],
 ) -> None:
     """Las ventas de un dia, en orden de reloj."""
-    apertura = datetime.combine(dia, APERTURA, tzinfo=UTC)
-    cierre = datetime.combine(dia, CIERRE, tzinfo=UTC)
+    apertura = _momento(dia, APERTURA)
+    cierre = _momento(dia, CIERRE)
     # Mas movimiento de viernes a domingo.
     cantidad = rng.randint(5, 9) + (2 if dia.weekday() >= 4 else 0)
 
-    if dia == ahora.date():
+    if dia == tiempo.hoy():
         # Hoy solo hay ventas hasta hace un momento: ninguna en el futuro.
         jornada = cierre - apertura
         cierre = min(cierre, ahora - timedelta(minutes=2))
