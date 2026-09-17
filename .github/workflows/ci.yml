@@ -36,6 +36,53 @@ jobs:
         working-directory: backend
         run: alembic upgrade head
 
+  postgres:
+    name: PostgreSQL
+    runs-on: ubuntu-latest
+
+    # Produccion corre sobre PostgreSQL. La suite corre en SQLite, que no
+    # puede confirmar los indices parciales, la cascada, el bloqueo de
+    # filas ni las fechas con zona: eso se prueba aca.
+    services:
+      db:
+        image: postgres:16
+        env:
+          POSTGRES_USER: stockarg
+          POSTGRES_PASSWORD: stockarg
+          POSTGRES_DB: stockarg_pruebas
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U stockarg -d stockarg_pruebas"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      SECRET_KEY: clave-solo-para-la-verificacion-de-ci
+      DATABASE_URL: postgresql+psycopg://stockarg:stockarg@localhost:5432/stockarg_pruebas
+      DATABASE_URL_PRUEBAS: postgresql+psycopg://stockarg:stockarg@localhost:5432/stockarg_pruebas
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar dependencias
+        run: pip install -r backend/requirements-dev.txt
+
+      - name: Las migraciones aplican y son reversibles
+        working-directory: backend
+        run: |
+          alembic upgrade head
+          alembic check
+          alembic downgrade base
+
+      - name: Pruebas contra PostgreSQL
+        run: pytest -m postgres
+
   imagen:
     name: La imagen de la API compila
     runs-on: ubuntu-latest

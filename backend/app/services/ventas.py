@@ -16,7 +16,7 @@ from datetime import UTC, datetime
 from decimal import Decimal
 
 from sqlalchemy import Select, func, or_, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, lazyload
 
 from app.core import ajustes_vivos
 from app.core.config import get_settings
@@ -144,6 +144,10 @@ def _productos_bloqueados(
             if id_sesion_demo is None
             else Producto.id_sesion_demo == id_sesion_demo,
         )
+        # Sin esto, la categoria y el proveedor entran con un LEFT JOIN
+        # y PostgreSQL rechaza el FOR UPDATE sobre el lado nulable: no
+        # se podria registrar ninguna venta.
+        .options(lazyload("*"))
         .order_by(Producto.id)
         .with_for_update()
     ).all()

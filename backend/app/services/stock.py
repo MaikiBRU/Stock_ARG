@@ -3,7 +3,7 @@
 from datetime import date
 
 from sqlalchemy import Select, func, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, lazyload
 
 from app.core import tiempo
 from app.models import (
@@ -48,6 +48,9 @@ def _producto_bloqueado(
             if id_sesion_demo is None
             else Producto.id_sesion_demo == id_sesion_demo,
         )
+        # Sin esto, la categoria y el proveedor entran con un LEFT JOIN
+        # y PostgreSQL rechaza el FOR UPDATE sobre el lado nulable.
+        .options(lazyload("*"))
         .with_for_update()
     )
     producto = db.scalars(consulta).first()

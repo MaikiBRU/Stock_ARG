@@ -8,6 +8,9 @@ requires-python = ">=3.12"
 testpaths = ["backend/tests"]
 pythonpath = ["backend"]
 addopts = "-q"
+markers = [
+    "postgres: necesita una base PostgreSQL (DATABASE_URL_PRUEBAS)",
+]
 
 [tool.ruff]
 line-length = 80

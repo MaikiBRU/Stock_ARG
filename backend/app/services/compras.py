@@ -11,7 +11,7 @@ from datetime import UTC, date, datetime
 from decimal import Decimal
 
 from sqlalchemy import Select, func, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, lazyload
 
 from app.core import tiempo
 from app.models import (
@@ -132,6 +132,9 @@ def registrar(
             if id_sesion_demo is None
             else Producto.id_sesion_demo == id_sesion_demo,
         )
+        # Sin esto, la categoria y el proveedor entran con un LEFT JOIN
+        # y PostgreSQL rechaza el FOR UPDATE sobre el lado nulable.
+        .options(lazyload("*"))
         .order_by(Producto.id)
         .with_for_update()
     ).all()
@@ -304,6 +307,9 @@ def anular(
             if id_sesion_demo is None
             else Producto.id_sesion_demo == id_sesion_demo,
         )
+        # Sin esto, la categoria y el proveedor entran con un LEFT JOIN
+        # y PostgreSQL rechaza el FOR UPDATE sobre el lado nulable.
+        .options(lazyload("*"))
         .order_by(Producto.id)
         .with_for_update()
     ).all()
