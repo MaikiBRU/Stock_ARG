@@ -3,15 +3,20 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { useUsuario } from "@/componentes/Sesion";
 import { useTextos } from "@/i18n/proveedor";
 import { ErrorDeApi, pedir } from "@/lib/api";
+import { inicioPara, type Rol } from "@/lib/rutas";
 import { olvidarSesion } from "@/lib/sesion";
 
-type Estado = { segundos_restantes: number; rol: string };
+type Estado = { segundos_restantes: number; rol: Rol };
+
+const ROLES: Rol[] = ["propietario", "encargado", "vendedor"];
 
 /** Franja permanente del modo demo (RF-J10). */
 export function FranjaDemo() {
   const { t } = useTextos();
+  const usuario = useUsuario();
   const router = useRouter();
   const [estado, setEstado] = useState<Estado | null>(null);
   const [ocupada, setOcupada] = useState(false);
@@ -57,13 +62,29 @@ export function FranjaDemo() {
 
   const minutos = Math.floor(estado.segundos_restantes / 60);
   const segundos = String(estado.segundos_restantes % 60).padStart(2, "0");
+  const nombresDeRol = {
+    propietario: t.rolPropietario,
+    encargado: t.rolEncargado,
+    vendedor: t.rolVendedor,
+  };
 
   async function reiniciar() {
     setOcupada(true);
     try {
       await pedir("/demo/sesion/reiniciar", { method: "POST" });
-      router.refresh();
-    } finally {
+      // Recarga completa: todas las pantallas vuelven a pedir sus datos.
+      window.location.assign(inicioPara(usuario.rol));
+    } catch {
+      setOcupada(false);
+    }
+  }
+
+  async function cambiarRol(rol: Rol) {
+    setOcupada(true);
+    try {
+      await pedir("/demo/sesion/rol", { method: "POST", cuerpo: { rol } });
+      window.location.assign(inicioPara(rol));
+    } catch {
       setOcupada(false);
     }
   }
@@ -83,9 +104,24 @@ export function FranjaDemo() {
       <p>
         <strong>{t.modoDemo}</strong>
         {" — "}
-        {t.terminaEn} {minutos}:{segundos} ({estado.rol})
+        {t.terminaEn} {minutos}:{segundos}
       </p>
-      <div className="flex gap-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <label className="flex items-center gap-2">
+          {t.verComo}
+          <select
+            value={usuario.rol}
+            disabled={ocupada}
+            onChange={(e) => cambiarRol(e.target.value as Rol)}
+            className="rounded border border-marca-700 bg-transparent px-2 py-1"
+          >
+            {ROLES.map((rol) => (
+              <option key={rol} value={rol}>
+                {nombresDeRol[rol]}
+              </option>
+            ))}
+          </select>
+        </label>
         <button
           type="button"
           onClick={reiniciar}

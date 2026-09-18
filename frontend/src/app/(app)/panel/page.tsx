@@ -88,12 +88,16 @@ export default function Panel() {
       })
       .catch((falla) => {
         if (!vigente) return;
-        setError(falla instanceof ErrorDeApi ? falla.message : null);
+        if (falla instanceof ErrorDeApi && falla.estado === 403) {
+          setError(t.sinPermiso);
+        } else {
+          setError(falla instanceof ErrorDeApi ? falla.message : t.errorGenerico);
+        }
       });
     return () => {
       vigente = false;
     };
-  }, []);
+  }, [t.errorGenerico, t.sinPermiso]);
 
   if (error) {
     return (

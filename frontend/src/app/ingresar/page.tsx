@@ -7,9 +7,10 @@ import { useState } from "react";
 import { BotonDemo } from "@/componentes/BotonDemo";
 import { useTextos } from "@/i18n/proveedor";
 import { ErrorDeApi, pedir } from "@/lib/api";
+import { inicioPara, type Rol } from "@/lib/rutas";
 import { marcarSesion } from "@/lib/sesion";
 
-type Token = { expira_en_minutos: number };
+type Token = { expira_en_minutos: number; usuario: { rol: Rol } };
 
 export default function Ingresar() {
   const { t } = useTextos();
@@ -32,7 +33,7 @@ export default function Ingresar() {
         },
       });
       marcarSesion(sesion.expira_en_minutos);
-      router.push("/panel");
+      router.push(inicioPara(sesion.usuario.rol));
     } catch (falla) {
       setError(falla instanceof ErrorDeApi ? falla.message : t.errorGenerico);
       setEntrando(false);
