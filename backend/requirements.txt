@@ -15,4 +15,6 @@ reportlab==5.0.1
 # la garantiza.
 tzdata==2026.4
 sendgrid==6.11.0
-google-auth==2.35.0
+google-auth==2.58.0
+# Transporte que usa google-auth para traer las claves publicas.
+requests==2.34.2

@@ -294,6 +294,58 @@ def emitir_token_de_sesion(usuario: Usuario) -> tuple[str, int]:
     return token, ajustes.access_token_expire_minutes
 
 
+# --- ingreso con Google (RF-A03) ----------------------------------------
+
+
+def ingresar_con_google(db: Session, perfil: dict) -> Usuario:
+    """Entra, o crea la cuenta, con un perfil de Google ya verificado.
+
+    Google confirmo el correo, asi que la cuenta nace verificada y sin
+    contrasena. Si ya existia una cuenta con ese correo, se la vincula:
+    tener dos cuentas para la misma persona segun como haya entrado es
+    la forma mas rapida de perder la mitad de su historial.
+    """
+    email = _normalizar_email(perfil["email"])
+    identificador = str(perfil.get("sub") or "") or None
+    usuario = buscar_por_email(db, email)
+
+    if usuario is None:
+        usuario = Usuario(
+            email=email,
+            nombre=(perfil.get("name") or email.split("@")[0])[:120],
+            password_hash=None,
+            google_id=identificador,
+            rol=Rol.PROPIETARIO if _es_el_primer_usuario(db) else Rol.VENDEDOR,
+            verificado=True,
+            activo=True,
+        )
+        db.add(usuario)
+        db.flush()
+        return usuario
+
+    if not usuario.activo:
+        raise ErrorDeAutenticacion(
+            "La cuenta esta deshabilitada.", "deshabilitada"
+        )
+    if (
+        usuario.google_id
+        and identificador
+        and usuario.google_id != identificador
+    ):
+        # Mismo correo, otra cuenta de Google: no se toca nada.
+        raise ErrorDeAutenticacion(CREDENCIALES_INCORRECTAS)
+
+    if identificador and not usuario.google_id:
+        usuario.google_id = identificador
+    # Si la cuenta estaba pendiente de verificar, Google ya hizo esa
+    # comprobacion.
+    usuario.verificado = True
+    usuario.intentos_fallidos = 0
+    usuario.bloqueado_hasta = None
+    db.flush()
+    return usuario
+
+
 # --- contrasena (RF-A04, RF-A07) ----------------------------------------
 
 

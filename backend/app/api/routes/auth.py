@@ -9,6 +9,7 @@ from app.db.session import get_db
 from app.models import TipoCodigo, Usuario
 from app.schemas.auth import (
     CambioContrasenaEntrada,
+    GoogleEntrada,
     LoginEntrada,
     MensajeSalida,
     PerfilEntrada,
@@ -21,7 +22,7 @@ from app.schemas.auth import (
     VerificacionEntrada,
 )
 from app.services import auth as servicio
-from app.services import correo
+from app.services import correo, google
 from app.services.limites import clave_de_ip, limitador
 
 router = APIRouter(prefix="/auth", tags=["cuentas"])
@@ -117,6 +118,7 @@ def verificar(
         access_token=token,
         expira_en_minutos=minutos,
         usuario=UsuarioSalida.model_validate(usuario),
+        sin_contrasena=usuario.password_hash is None,
     )
 
 
@@ -179,6 +181,56 @@ def login(
         access_token=token,
         expira_en_minutos=minutos,
         usuario=UsuarioSalida.model_validate(usuario),
+        sin_contrasena=usuario.password_hash is None,
+    )
+
+
+@router.post("/google", response_model=TokenSalida)
+def ingresar_con_google(
+    datos: GoogleEntrada,
+    request: Request,
+    db: Session = Depends(get_db),
+    ajustes: Settings = Depends(get_settings),
+) -> TokenSalida:
+    """Ingreso con Google (RF-A03).
+
+    El navegador manda el token de identidad que le dio Google; aca se
+    verifica contra Google antes de mirar nada de la base.
+    """
+    _limitar(
+        request,
+        "google",
+        ajustes.login_max_intentos_por_ip,
+        ajustes.login_ventana_ip_segundos,
+    )
+
+    try:
+        perfil = google.verificar_credencial(datos.credential)
+    except google.GoogleNoConfigurado as error:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=error.mensaje,
+        ) from error
+    except google.CredencialInvalida as error:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail=error.mensaje
+        ) from error
+
+    try:
+        usuario = servicio.ingresar_con_google(db, perfil)
+    except servicio.ErrorDeAutenticacion as error:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail=error.mensaje
+        ) from error
+
+    token, minutos = servicio.emitir_token_de_sesion(usuario)
+    db.commit()
+    return TokenSalida(
+        access_token=token,
+        expira_en_minutos=minutos,
+        usuario=UsuarioSalida.model_validate(usuario),
+        sin_contrasena=usuario.password_hash is None,
     )
 
 
@@ -271,6 +323,7 @@ def cambiar_contrasena(
         access_token=token,
         expira_en_minutos=minutos,
         usuario=UsuarioSalida.model_validate(usuario),
+        sin_contrasena=usuario.password_hash is None,
     )
 
 

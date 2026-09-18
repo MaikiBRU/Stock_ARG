@@ -138,6 +138,17 @@ class TokenSalida(BaseModel):
     token_type: str = "bearer"
     expira_en_minutos: int
     usuario: UsuarioSalida
+    # Quien entro con Google todavia no tiene contrasena. La pantalla lo
+    # usa para ofrecerle ponerle una (RF-A03).
+    sin_contrasena: bool = False
+
+
+class GoogleEntrada(BaseModel):
+    """Token de identidad que devuelve Google en el navegador."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    credential: str = Field(min_length=1, max_length=4096)
 
 
 class MensajeSalida(BaseModel):
