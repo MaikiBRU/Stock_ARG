@@ -81,6 +81,11 @@ def client(db):
             db.info.pop(ajustes_vivos.CLAVE_EN_SESION, None)
 
     app.dependency_overrides[get_db] = _db_de_la_prueba
+    # Los errores no controlados se anotan con una sesion propia: aca
+    # tiene que ser una sobre la misma base de la prueba.
+    app.state.sesion_de_sistema = sessionmaker(
+        bind=db.get_bind(), expire_on_commit=False
+    )
     with TestClient(app) as c:
         yield c
     app.dependency_overrides.clear()
