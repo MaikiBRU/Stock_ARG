@@ -4,6 +4,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
+from app.core import tiempo
 from app.models import Auditoria, Compra, EstadoCompra, Producto, Usuario
 
 CLAVE = "Kiosco2026"
@@ -101,7 +102,7 @@ def test_el_panel_lista_lo_que_hay_que_reponer(client, sesiones):
 def test_el_panel_avisa_de_los_proximos_a_vencer(client, sesiones):
     """RF-B04. Los ya vencidos van en su propia lista."""
     duena = sesiones["propietario"]
-    hoy = datetime.now(UTC).date()
+    hoy = tiempo.hoy()
     _producto(
         client,
         duena,
@@ -124,7 +125,7 @@ def test_el_panel_avisa_de_los_proximos_a_vencer(client, sesiones):
 def test_el_panel_separa_los_vencidos_con_stock(client, sesiones):
     """RF-B05. Sin stock no hay nada que dar de baja."""
     duena = sesiones["propietario"]
-    ayer = (datetime.now(UTC).date() - timedelta(days=1)).isoformat()
+    ayer = (tiempo.hoy() - timedelta(days=1)).isoformat()
     _producto(
         client,
         duena,
@@ -641,7 +642,7 @@ def test_cambiar_el_umbral_cambia_el_resumen_de_stock(client, sesiones):
 def test_cambiar_la_ventana_de_vencimiento_cambia_el_panel(client, sesiones):
     """RF-B04 con la ventana configurada, no la del entorno."""
     duena = sesiones["propietario"]
-    hoy = datetime.now(UTC).date()
+    hoy = tiempo.hoy()
     _producto(
         client,
         duena,

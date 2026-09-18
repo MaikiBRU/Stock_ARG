@@ -1,9 +1,10 @@
 """Proveedores, compras y reportes (modulos G y H)."""
 
-from datetime import UTC, datetime, timedelta
+from datetime import timedelta
 
 import pytest
 
+from app.core import tiempo
 from app.models import Compra, MovimientoStock, Producto, Proveedor
 
 CUIT = "30712345678"
@@ -325,7 +326,7 @@ def test_el_mismo_producto_repetido_promedia_el_costo(
 
 def test_una_compra_con_fecha_futura_se_rechaza(client, sesiones, deposito):
     """Descuadraria cualquier reporte por periodo."""
-    manana = (datetime.now(UTC).date() + timedelta(days=1)).isoformat()
+    manana = (tiempo.hoy() + timedelta(days=1)).isoformat()
 
     respuesta = _comprar(
         client,

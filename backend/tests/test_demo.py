@@ -1,11 +1,12 @@
 """Demo publica: sandboxes anonimos, aislados y temporales (modulo J)."""
 
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 import jwt
 import pytest
 from sqlalchemy import func, select
 
+from app.core import tiempo
 from app.core.config import get_settings
 from app.core.security import crear_token, hash_opaco
 from app.models import (
@@ -89,7 +90,7 @@ def test_el_sandbox_nace_con_un_kiosco_verosimil(client):
     assert client.get("/compras", headers=cabecera).json()["total"] >= 3
     assert client.get("/ventas", headers=cabecera).json()["total"] >= 60
 
-    hoy = date.today()
+    hoy = tiempo.hoy()
     tres_semanas = client.get(
         f"/reportes/ventas?desde={hoy - timedelta(days=20)}&hasta={hoy}",
         headers=cabecera,
