@@ -1,0 +1,43 @@
+# Despliegue de la API en el servidor.
+#
+# La base es el PostgreSQL que ya corre ahi y el TLS lo termina Caddy:
+# este compose agrega solamente la API, en la misma red que el proxy.
+# El puerto no se publica al host: a la API se llega por Caddy.
+
+services:
+  api:
+    build:
+      context: ../backend
+    image: stockarg-api:${VERSION:-actual}
+    container_name: stockarg-api
+    restart: unless-stopped
+    env_file: ../backend/.env
+    expose:
+      - "8000"
+    networks:
+      - proxy
+      - datos
+    healthcheck:
+      # El contenedor no trae curl. Python ya esta adentro.
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/salud', timeout=3).status == 200 else 1)",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+networks:
+  # Las dos redes ya existen en el servidor: la del proxy y la de la
+  # base. Los nombres se pasan por entorno para no fijar aca los del
+  # otro proyecto que comparte el host.
+  proxy:
+    external: true
+    name: ${RED_DEL_PROXY:-caddy}
+  datos:
+    external: true
+    name: ${RED_DE_LA_BASE:-datos}

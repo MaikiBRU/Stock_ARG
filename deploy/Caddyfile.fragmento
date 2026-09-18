@@ -1,0 +1,25 @@
+# Fragmento para el Caddyfile del servidor. Caddy resuelve el
+# certificado solo; la API nunca queda expuesta de forma directa.
+
+api-stockarg.aaronbrumat.com.ar {
+	encode zstd gzip
+
+	# El contenedor no publica puertos al host: Caddy lo alcanza por la
+	# red interna de docker.
+	reverse_proxy stockarg-api:8000
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Cross-Origin-Opener-Policy "same-origin"
+		-Server
+	}
+
+	log {
+		output file /var/log/caddy/stockarg-api.log {
+			roll_size 10MiB
+			roll_keep 5
+		}
+	}
+}

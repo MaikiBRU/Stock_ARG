@@ -48,8 +48,10 @@ backend/
     api/routes/  endpoints
   alembic/       migraciones de esquema
   tests/         suite de pytest
+deploy/              compose de producción, script de despliegue y Caddy
 docker-compose.yml   entorno local: base y API
 DEMO.md              diseño de la demo pública
+DESPLIEGUE.md        cómo se despliega y cómo se vuelve atrás
 ```
 
 ## Puesta en marcha
