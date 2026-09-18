@@ -6,6 +6,8 @@
  * que un XSS no se lleva el token puesto.
  */
 
+import { MARCA, olvidarSesion } from "@/lib/sesion";
+
 export const URL_DE_LA_API =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -49,6 +51,23 @@ function leerDetalle(cuerpo: unknown, estado: number): [string | null, string] {
 
 type Opciones = Omit<RequestInit, "body"> & { cuerpo?: unknown };
 
+// En estas rutas un 401 es "datos incorrectos", no una sesion vencida.
+const RUTAS_DE_INGRESO = ["/auth/login", "/auth/google", "/auth/verificar"];
+
+/**
+ * Si la sesion vencio en medio del uso (la demo por inactividad, el
+ * token por tiempo), cada pantalla mostraria "no autenticado" sin salida.
+ * Se borra la marca y se vuelve al ingreso, avisando por que.
+ */
+function atenderSesionVencida(ruta: string, estado: number) {
+  if (estado !== 401 || typeof window === "undefined") return;
+  if (RUTAS_DE_INGRESO.some((r) => ruta.startsWith(r))) return;
+  if (!document.cookie.includes(`${MARCA}=`)) return;
+  olvidarSesion();
+  // Recarga completa, y sin dejar la pagina vencida en el historial.
+  window.location.replace("/ingresar?vencida=1");
+}
+
 /** Llama a la API y devuelve el cuerpo ya convertido. */
 export async function pedir<T>(ruta: string, opciones: Opciones = {}) {
   const { cuerpo, headers, ...resto } = opciones;
@@ -86,6 +105,7 @@ export async function pedir<T>(ruta: string, opciones: Opciones = {}) {
 
   const datos = await respuesta.json().catch(() => null);
   if (!respuesta.ok) {
+    atenderSesionVencida(ruta, respuesta.status);
     const [codigo, mensaje] = leerDetalle(datos, respuesta.status);
     throw new ErrorDeApi(respuesta.status, codigo, mensaje);
   }
@@ -98,17 +118,23 @@ export async function descargar(ruta: string, nombre: string) {
     credentials: "include",
   });
   if (!respuesta.ok) {
+    atenderSesionVencida(ruta, respuesta.status);
     const datos = await respuesta.json().catch(() => null);
     const [codigo, mensaje] = leerDetalle(datos, respuesta.status);
     throw new ErrorDeApi(respuesta.status, codigo, mensaje);
   }
 
   const contenido = await respuesta.blob();
+  const direccion = URL.createObjectURL(contenido);
   const enlace = document.createElement("a");
-  enlace.href = URL.createObjectURL(contenido);
+  enlace.href = direccion;
   enlace.download = nombre;
+  // Firefox solo descarga desde un enlace que esta en el documento, y
+  // revocar la direccion en el mismo instante puede cortar la descarga.
+  document.body.appendChild(enlace);
   enlace.click();
-  URL.revokeObjectURL(enlace.href);
+  enlace.remove();
+  setTimeout(() => URL.revokeObjectURL(direccion), 10_000);
 }
 
 /**

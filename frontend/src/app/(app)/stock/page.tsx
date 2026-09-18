@@ -182,7 +182,8 @@ function FormularioDeMovimiento({
           name="cantidad"
           type="number"
           required
-          min="1"
+          // Un ajuste puede ser cero: el estante se conto vacio.
+          min={!baja && tipo === "ajuste" ? "0" : "1"}
           step="1"
           max={
             baja || tipo === "salida"

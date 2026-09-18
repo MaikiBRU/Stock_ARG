@@ -97,7 +97,10 @@ def registrar_movimiento(
     puede quedar un stock modificado sin la linea que lo explique, ni al
     reves.
     """
-    if cantidad <= 0:
+    # Un ajuste es el valor contado, y contar cero es valido; el resto
+    # de los tipos mueve una cantidad, que tiene que ser positiva.
+    minimo = 0 if tipo is TipoMovimiento.AJUSTE else 1
+    if cantidad < minimo:
         raise ErrorDeProducto(
             "La cantidad debe ser mayor a cero.", "cantidad_invalida"
         )

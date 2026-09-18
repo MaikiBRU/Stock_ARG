@@ -16,11 +16,7 @@ const ROLES: Rol[] = ["propietario", "encargado", "vendedor"];
 
 /** Franja permanente del modo demo (RF-J10). */
 export function FranjaDemo() {
-  const { t } = useTextos();
-  const usuario = useUsuario();
-  const router = useRouter();
   const [estado, setEstado] = useState<Estado | null>(null);
-  const [ocupada, setOcupada] = useState(false);
 
   useEffect(() => {
     let vigente = true;
@@ -58,6 +54,22 @@ export function FranjaDemo() {
       clearInterval(confirmacion);
     };
   }, []);
+
+  return <Franja estado={estado} />;
+}
+
+function Franja({ estado }: { estado: Estado | null }) {
+  const { t } = useTextos();
+  const usuario = useUsuario();
+  const router = useRouter();
+  const [ocupada, setOcupada] = useState(false);
+  const agotada = estado?.segundos_restantes === 0;
+
+  // Al llegar a cero se consulta a la API: si la sesion murio, responde
+  // 401 y el cliente de la API lleva al ingreso con el aviso.
+  useEffect(() => {
+    if (agotada) pedir("/demo/sesion").catch(() => {});
+  }, [agotada]);
 
   if (!estado) return null;
 

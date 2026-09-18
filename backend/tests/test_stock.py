@@ -89,6 +89,30 @@ def test_la_cantidad_tiene_que_ser_positiva(client, sesiones):
     assert respuesta.status_code == 422
 
 
+def test_un_ajuste_a_cero_registra_el_estante_vacio(client, sesiones, db):
+    """Contar cero es un conteo valido: no hay que disfrazarlo de salida."""
+    producto = _producto(client, sesiones["propietario"])
+
+    respuesta = _mover(
+        client, sesiones["propietario"], producto["id"], "ajuste", 0
+    )
+
+    assert respuesta.status_code == 201, respuesta.text
+    assert respuesta.json()["stock_resultante"] == 0
+    guardado = db.get(Producto, producto["id"])
+    db.refresh(guardado)
+    assert guardado.stock_actual == 0
+
+
+@pytest.mark.parametrize("tipo", ["entrada", "salida", "devolucion"])
+def test_solo_el_ajuste_admite_cero(client, sesiones, tipo):
+    producto = _producto(client, sesiones["propietario"])
+
+    respuesta = _mover(client, sesiones["propietario"], producto["id"], tipo, 0)
+
+    assert respuesta.status_code == 422
+
+
 def test_un_producto_inexistente_devuelve_404(client, sesiones):
     respuesta = _mover(client, sesiones["propietario"], 9999, "entrada", 5)
 

@@ -2,7 +2,13 @@
 
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_validator,
+    model_validator,
+)
 
 from app.models import MotivoBaja, TipoMovimiento
 
@@ -22,7 +28,9 @@ class MovimientoEntrada(BaseModel):
 
     id_producto: int
     tipo: TipoMovimiento
-    cantidad: int = Field(gt=0)
+    # Cero solo vale en un ajuste (un estante vacio); lo controla el
+    # validador de abajo.
+    cantidad: int = Field(ge=0)
     nota: str | None = Field(default=None, max_length=255)
 
     @field_validator("tipo")
@@ -35,6 +43,12 @@ class MovimientoEntrada(BaseModel):
                 f"Admitidos: {admitidos}."
             )
         return valor
+
+    @model_validator(mode="after")
+    def _cero_solo_en_ajuste(self) -> "MovimientoEntrada":
+        if self.cantidad == 0 and self.tipo is not TipoMovimiento.AJUSTE:
+            raise ValueError("La cantidad debe ser mayor a cero.")
+        return self
 
 
 class BajaEntrada(BaseModel):

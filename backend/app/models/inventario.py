@@ -46,7 +46,11 @@ class MovimientoStock(Base):
 
     __tablename__ = "movimientos_stock"
     __table_args__ = (
-        CheckConstraint("cantidad > 0", name="cantidad_positiva"),
+        # Solo un ajuste puede ser cero: registra un estante vacio.
+        CheckConstraint(
+            "cantidad > 0 OR (tipo = 'AJUSTE' AND cantidad = 0)",
+            name="cantidad_valida",
+        ),
         CheckConstraint(
             "stock_resultante >= 0", name="stock_resultante_no_negativo"
         ),

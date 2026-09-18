@@ -125,6 +125,7 @@ const es = {
   // --- acceso ---
   ingresarTitulo: "Bienvenido de nuevo",
   ingresarTexto: "Ingresá con tu cuenta del comercio.",
+  sesionVencida: "Tu sesión terminó. Volvé a ingresar o abrí otra demo.",
   registroTitulo: "Crear una cuenta",
   registroTexto: "La primera cuenta del comercio queda como propietaria.",
   creando: "Creando...",
@@ -530,6 +531,7 @@ const en: Textos = {
 
   ingresarTitulo: "Welcome back",
   ingresarTexto: "Sign in with your shop account.",
+  sesionVencida: "Your session ended. Sign in again or open a new demo.",
   registroTitulo: "Create an account",
   registroTexto: "The shop's first account becomes the owner.",
   creando: "Creating...",

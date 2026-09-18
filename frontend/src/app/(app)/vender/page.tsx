@@ -67,12 +67,13 @@ function ElegirCliente({
   const [abierto, setAbierto] = useState(false);
   const [texto, setTexto] = useState("");
   const buscado = useDemora(texto.trim(), 250);
-  const { datos } = useConsulta<Pagina<Cliente>>(
+  const { datos, alDia } = useConsulta<Pagina<Cliente>>(
     abierto && buscado.length >= 2
       ? `/clientes${consulta({ busqueda: buscado, limite: 6 })}`
       : null,
   );
-  const opciones = buscado.length >= 2 ? (datos?.items ?? []) : [];
+  const opciones =
+    alDia && buscado === texto.trim() ? (datos?.items ?? []) : [];
 
   if (cliente) {
     return (
@@ -174,11 +175,13 @@ export default function Vender() {
   // disparar una peticion por letra.
   const texto = useDemora(busqueda.trim(), 200);
   const buscando = texto.length >= 2 && !PARECE_CODIGO.test(texto);
-  const { datos: encontrados } = useConsulta<Pagina<Producto>>(
+  const { datos: encontrados, alDia } = useConsulta<Pagina<Producto>>(
     buscando ? `/productos${consulta({ busqueda: texto, limite: 8 })}` : null,
   );
-  const resultados =
-    buscando && busqueda.trim().length >= 2 ? (encontrados?.items ?? []) : [];
+  // Solo cuentan los resultados del texto que esta escrito ahora: con
+  // los de la busqueda anterior, un Enter rapido agregaria otro producto.
+  const vigentes = buscando && alDia && texto === busqueda.trim();
+  const resultados = vigentes ? (encontrados?.items ?? []) : [];
 
   const subtotal = useMemo(
     () =>
@@ -443,10 +446,7 @@ export default function Vender() {
               ))}
             </ul>
           )}
-          {buscando &&
-            encontrados &&
-            encontrados.items.length === 0 &&
-            busqueda.trim().length >= 2 && (
+          {vigentes && encontrados && encontrados.items.length === 0 && (
               <p className="mt-2 text-sm text-suave">{t.sinResultados}</p>
             )}
         </div>

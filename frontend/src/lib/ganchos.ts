@@ -56,6 +56,9 @@ export function useConsulta<T>(ruta: string | null) {
     datos: resultado.datos,
     error: resultado.clave === clave ? resultado.error : null,
     cargando: ruta !== null && resultado.clave !== clave,
+    // True si los datos en mano son de esta ruta y no de la anterior:
+    // una busqueda no puede actuar sobre resultados de otro texto.
+    alDia: ruta !== null && resultado.clave === clave,
     recargar,
   };
 }

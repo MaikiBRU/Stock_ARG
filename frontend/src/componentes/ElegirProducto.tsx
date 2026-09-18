@@ -36,12 +36,16 @@ export function ElegirProducto({
   const [texto, setTexto] = useState("");
   const [abierto, setAbierto] = useState(false);
   const buscado = useDemora(texto.trim(), 200);
-  const { datos } = useConsulta<Pagina<ProductoElegido>>(
+  const { datos, alDia } = useConsulta<Pagina<ProductoElegido>>(
     buscado.length >= 1
       ? `/productos${consulta({ busqueda: buscado, limite: 8 })}`
       : null,
   );
-  const opciones = abierto && texto.trim() ? (datos?.items ?? []) : [];
+  // Solo los resultados del texto escrito ahora, no los del anterior.
+  const opciones =
+    abierto && alDia && buscado === texto.trim() && buscado
+      ? (datos?.items ?? [])
+      : [];
 
   return (
     <div className="flex flex-col gap-1.5">
