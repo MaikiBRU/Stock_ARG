@@ -48,6 +48,12 @@ backend/
     api/routes/  endpoints
   alembic/       migraciones de esquema
   tests/         suite de pytest
+frontend/
+  src/
+    app/         pantallas (App Router)
+    componentes/ piezas compartidas
+    i18n/        textos en español e inglés
+    lib/         cliente de la API, formato y sesión
 deploy/              compose de producción, script de despliegue y Caddy
 docker-compose.yml   entorno local: base y API
 DEMO.md              diseño de la demo pública
