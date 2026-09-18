@@ -8,7 +8,7 @@ esta publicada en el repositorio.
 from functools import lru_cache
 from zoneinfo import ZoneInfo
 
-from pydantic import Field, field_validator, model_validator
+from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Cadenas que son claramente relleno y no secretos. Se rechazan aunque
@@ -96,8 +96,14 @@ class Settings(BaseSettings):
     vendedor_puede_pactar_precio: bool = False
 
     # --- correo y Google ------------------------------------------------
-    sendgrid_api_key: str | None = None
+    # SMTP de cualquier proveedor. 465 usa TLS directo; 587, STARTTLS.
+    # La clave es SecretStr: no aparece en logs ni en repr().
+    smtp_host: str | None = None
+    smtp_puerto: int = 465
+    smtp_usuario: str | None = None
+    smtp_contrasena: SecretStr | None = None
     email_from: str = "no-reply@stockarg.local"
+    email_from_nombre: str = "StockARG"
     google_client_id: str | None = None
     google_client_secret: str | None = None
     google_redirect_uri: str | None = None

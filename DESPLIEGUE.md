@@ -41,6 +41,29 @@ navegador -> Caddy (TLS) -> contenedor stockarg-api -> PostgreSQL del servidor
 En producción, la documentación interactiva y el esquema OpenAPI responden 404,
 y CORS queda limitado a esos orígenes.
 
+### Correo
+
+El alta de cuentas y la recuperación de contraseña mandan correo por SMTP. Con
+Resend (plan gratuito: 3.000 por mes, 100 por día) y el dominio en Cloudflare:
+
+| Variable            | Valor                                        |
+| ------------------- | -------------------------------------------- |
+| `SMTP_HOST`         | `smtp.resend.com`                            |
+| `SMTP_PUERTO`       | `465`                                        |
+| `SMTP_USUARIO`      | `resend`                                     |
+| `SMTP_CONTRASENA`   | la API key de Resend (solo en el servidor)   |
+| `EMAIL_FROM`        | `no-reply@stockarg.aaronbrumat.com.ar`       |
+| `EMAIL_FROM_NOMBRE` | `StockARG`                                   |
+
+Para probarlo sin crear una cuenta en la app:
+
+```sh
+docker compose -f deploy/docker-compose.prod.yml exec api python -m app.probar_correo tu-correo@ejemplo.com
+```
+
+Cambiar de proveedor (Cloudflare Email Service, Brevo) es cambiar estas
+variables: el código no depende de ninguno.
+
 Las redes de docker se toman del entorno: `RED_DEL_PROXY` (la de Caddy) y
 `RED_DE_LA_BASE` (la de PostgreSQL). Si en el servidor se llaman distinto, hay
 que exportarlas antes de desplegar.
