@@ -123,5 +123,31 @@ curl -X POST https://api-stockarg.aaronbrumat.com.ar/demo/mantenimiento/limpieza
 
 ## Frontend
 
-Todavía no está desplegado. Va a Cloudflare Workers, en
-`stockarg.aaronbrumat.com.ar`, apuntando a esta API.
+Corre en Cloudflare Workers (plan gratuito) con el adaptador OpenNext, en
+`stockarg.aaronbrumat.com.ar`. La configuración está en
+[frontend/wrangler.jsonc](frontend/wrangler.jsonc) y
+[frontend/open-next.config.ts](frontend/open-next.config.ts).
+
+La dirección de la API se fija al compilar, desde
+[frontend/.env.production](frontend/.env.production). Es pública: ahí nunca
+va un secreto.
+
+Primero tiene que estar la API respondiendo; si no, el sitio queda en línea
+pero cada pantalla falla.
+
+```bash
+cd frontend
+npx wrangler login      # una sola vez
+npm run deploy          # compila con OpenNext y publica
+```
+
+El primer despliegue crea solo el registro DNS y el certificado del dominio
+propio. La dirección `*.workers.dev` queda apagada. Para probar el paquete de
+Workers en la máquina antes de publicar:
+
+```bash
+npm run preview
+```
+
+Volver atrás: en el panel de Cloudflare, Workers, `stockarg`, Deployments,
+elegir la versión anterior y "Rollback".

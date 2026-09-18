@@ -1,0 +1,30 @@
+{
+  // Frontend de StockARG en Cloudflare Workers, via OpenNext.
+  // Plan gratuito: sin R2 ni imagenes, porque todas las paginas se
+  // arman en cada pedido y no hay next/image.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "stockarg",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "stockarg"
+    }
+  ],
+  // El dominio propio: al desplegar, Cloudflare crea el registro DNS y
+  // el certificado. La direccion workers.dev queda apagada.
+  "routes": [
+    {
+      "pattern": "stockarg.aaronbrumat.com.ar",
+      "custom_domain": true
+    }
+  ],
+  "workers_dev": false,
+  "observability": { "enabled": true }
+}

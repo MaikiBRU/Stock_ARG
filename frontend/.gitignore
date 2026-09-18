@@ -34,6 +34,7 @@ yarn-error.log*
 .env*
 # La plantilla no tiene secretos y documenta las variables.
 !.env.example
+!.env.production
 
 # vercel
 .vercel
@@ -41,3 +42,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# OpenNext y Wrangler
+.open-next
+.wrangler
+.dev.vars
