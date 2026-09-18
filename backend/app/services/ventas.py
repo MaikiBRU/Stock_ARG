@@ -17,6 +17,7 @@ from decimal import Decimal
 
 from sqlalchemy import Select, func, or_, select
 from sqlalchemy.orm import Session, lazyload
+from sqlalchemy.sql.elements import ColumnElement
 
 from app.core import ajustes_vivos
 from app.core.config import get_settings
@@ -423,7 +424,7 @@ def listar(
         por_producto = select(VentaItem.id_venta).where(
             func.lower(VentaItem.nombre_producto).like(patron)
         )
-        condiciones = [Venta.id.in_(por_producto)]
+        condiciones: list[ColumnElement[bool]] = [Venta.id.in_(por_producto)]
         if busqueda.strip().isdigit():
             condiciones.append(Venta.id == int(busqueda.strip()))
         consulta = consulta.where(or_(*condiciones))

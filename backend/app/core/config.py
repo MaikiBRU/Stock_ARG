@@ -219,4 +219,6 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     """Devuelve la configuracion, construida una sola vez."""
-    return Settings()
+    # Los valores obligatorios, como la clave de firma, los completa
+    # pydantic-settings desde el entorno; no se pasan aca.
+    return Settings()  # type: ignore[call-arg]

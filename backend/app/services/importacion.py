@@ -318,7 +318,10 @@ def aplicar(
             # El stock no se toca en una importacion: se mueve por el
             # modulo D, que deja traza de cada cambio.
             limpios.pop("stock_actual", None)
-            limpios.setdefault("precio_venta", existente.precio_venta)
+            if existente is not None:
+                # El precio es obligatorio al actualizar: si el archivo
+                # no lo trae, se conserva el que ya tenia.
+                limpios.setdefault("precio_venta", existente.precio_venta)
             servicio_productos.actualizar_producto(
                 db, id_existente, limpios, id_sesion_demo
             )

@@ -16,9 +16,18 @@ import random
 import secrets
 from collections import Counter
 from datetime import UTC, datetime, timedelta
-from typing import Any
+from typing import Any, cast
 
-from sqlalchemy import ColumnElement, delete, event, func, or_, select, update
+from sqlalchemy import (
+    ColumnElement,
+    CursorResult,
+    delete,
+    event,
+    func,
+    or_,
+    select,
+    update,
+)
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
@@ -281,10 +290,13 @@ def purgar_vencidas(db: Session, ahora: datetime | None = None) -> int:
     id_sesion_demo NULL. Tampoco quedan huerfanos que reclamar: la clave
     foranea impide que exista una fila de sandbox sin su sesion.
     """
-    resultado = db.execute(
-        delete(SesionDemo)
-        .where(_vencidas(ahora or _ahora()))
-        .execution_options(synchronize_session=False)
+    resultado = cast(
+        "CursorResult[Any]",
+        db.execute(
+            delete(SesionDemo)
+            .where(_vencidas(ahora or _ahora()))
+            .execution_options(synchronize_session=False)
+        ),
     )
     db.commit()
     return resultado.rowcount or 0
@@ -325,8 +337,11 @@ def usuario_del_token(db: Session, carga: dict[str, Any]) -> Usuario | None:
         return None
     if carga.get("sub") != f"demo:{id_sesion}":
         return None
+    nombre_del_rol = carga.get("rol")
+    if not isinstance(nombre_del_rol, str):
+        return None
     try:
-        rol = Rol(carga.get("rol"))
+        rol = Rol(nombre_del_rol)
     except ValueError:
         return None
 
@@ -350,7 +365,7 @@ def usuario_del_token(db: Session, carga: dict[str, Any]) -> Usuario | None:
 # --- cupos (RF-J06) ------------------------------------------------------
 
 
-def cupos_de_filas() -> dict[type, tuple[str, int]]:
+def cupos_de_filas() -> dict[type[particion.ConParticion], tuple[str, int]]:
     """Maximo de filas por tabla dentro de un sandbox.
 
     Los que pide el requerimiento se configuran por entorno. El resto
@@ -389,11 +404,14 @@ def consumir_cupo(db: Session, id_sesion: str, recurso: str) -> None:
 
     maximo = getattr(get_settings(), f"demo_max_{recurso}")
     columna = getattr(SesionDemo, recurso)
-    resultado = db.execute(
-        update(SesionDemo)
-        .where(SesionDemo.id == id_sesion, columna < maximo)
-        .values({columna: columna + 1})
-        .execution_options(synchronize_session=False)
+    resultado = cast(
+        "CursorResult[Any]",
+        db.execute(
+            update(SesionDemo)
+            .where(SesionDemo.id == id_sesion, columna < maximo)
+            .values({columna: columna + 1})
+            .execution_options(synchronize_session=False)
+        ),
     )
     if not resultado.rowcount:
         db.rollback()
@@ -408,7 +426,7 @@ def estado_de_cupos(
     ajustes = get_settings()
     db.refresh(sesion)
 
-    def contar(modelo: type) -> int:
+    def contar(modelo: type[particion.ConParticion]) -> int:
         return (
             db.scalar(
                 select(func.count())

@@ -137,7 +137,7 @@ def reiniciar(
     usuario: Usuario = Depends(exigir_demo),
 ) -> SesionDemoSalida:
     """Vuelve el sandbox a cero sin cambiar de token (RF-J08)."""
-    id_sesion, rol = usuario.id_sesion_demo, usuario.rol
+    id_sesion, rol = _sesion_de(db, usuario).id, usuario.rol
     clave = f"demo-reinicio:{hash_opaco(id_sesion)}"
     if not limitador.permitido(clave, MAX_REINICIOS_POR_HORA, UNA_HORA):
         raise HTTPException(
@@ -155,6 +155,11 @@ def reiniciar(
     # La semilla trae un usuario por rol, asi que siempre hay a quien
     # devolverle el token.
     elegido = servicio.usuario_por_rol(db, id_sesion, rol)
+    if elegido is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No hay un usuario activo con ese rol en la demo.",
+        )
     return _salida(sesion, elegido)
 
 
@@ -164,7 +169,7 @@ def terminar(
     usuario: Usuario = Depends(exigir_demo),
 ) -> MensajeSalida:
     """Borra el sandbox y todos sus datos en el acto (RF-J08)."""
-    servicio.terminar(db, usuario.id_sesion_demo)
+    servicio.terminar(db, _sesion_de(db, usuario).id)
     return MensajeSalida(mensaje="La demo termino y sus datos se borraron.")
 
 

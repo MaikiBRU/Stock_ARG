@@ -25,6 +25,9 @@ jobs:
           ruff check backend/
           ruff format --check backend/
 
+      - name: Tipos
+        run: mypy
+
       - name: Pruebas
         # La suite corre sin contenedores ni base externa (RNF-10).
         run: pytest

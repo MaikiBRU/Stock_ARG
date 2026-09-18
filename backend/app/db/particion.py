@@ -19,11 +19,19 @@ todas las filas.
 """
 
 from functools import cache
+from typing import Any, Protocol, runtime_checkable
 
 from sqlalchemy import event
 from sqlalchemy.orm import ORMExecuteState, Session, with_loader_criteria
 
 CLAVE_EN_SESION = "particion"
+
+
+@runtime_checkable
+class ConParticion(Protocol):
+    """Modelo que lleva la columna de particion."""
+
+    id_sesion_demo: Any
 
 
 class FugaDeParticion(RuntimeError):
@@ -48,7 +56,7 @@ def actual(sesion: Session) -> tuple[bool, str | None]:
 
 
 @cache
-def modelos_particionados() -> tuple[type, ...]:
+def modelos_particionados() -> tuple[type[ConParticion], ...]:
     """Clases con columna id_sesion_demo.
 
     Se calcula la primera vez que se usa y no al importar: en ese momento

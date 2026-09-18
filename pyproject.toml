@@ -12,6 +12,14 @@ markers = [
     "postgres: necesita una base PostgreSQL (DATABASE_URL_PRUEBAS)",
 ]
 
+[tool.mypy]
+python_version = "3.12"
+mypy_path = "backend"
+files = ["backend/app"]
+# reportlab, sendgrid y google-auth no publican tipos: que les falten no
+# puede frenar el chequeo del codigo propio.
+ignore_missing_imports = true
+
 [tool.ruff]
 line-length = 80
 target-version = "py312"
