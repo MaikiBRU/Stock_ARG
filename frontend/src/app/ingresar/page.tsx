@@ -1,20 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import {
+  BotonGoogle,
+  MarcoDeAcceso,
+  Separador,
+  useEntrar,
+  type Token,
+} from "@/componentes/Acceso";
 import { BotonDemo } from "@/componentes/BotonDemo";
+import { Boton } from "@/componentes/ui/Boton";
+import { Campo } from "@/componentes/ui/Campo";
+import { Alerta } from "@/componentes/ui/Superficie";
 import { useTextos } from "@/i18n/proveedor";
-import { ErrorDeApi, pedir } from "@/lib/api";
-import { inicioPara, type Rol } from "@/lib/rutas";
-import { marcarSesion } from "@/lib/sesion";
-
-type Token = { expira_en_minutos: number; usuario: { rol: Rol } };
+import { mensajeDe, pedir } from "@/lib/api";
 
 export default function Ingresar() {
   const { t } = useTextos();
-  const router = useRouter();
+  const entrar = useEntrar();
   const [entrando, setEntrando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,72 +30,73 @@ export default function Ingresar() {
     setError(null);
 
     try {
-      const sesion = await pedir<Token>("/auth/login", {
-        method: "POST",
-        cuerpo: {
-          email: formulario.get("email"),
-          contrasena: formulario.get("contrasena"),
-        },
-      });
-      marcarSesion(sesion.expira_en_minutos);
-      router.push(inicioPara(sesion.usuario.rol));
+      entrar(
+        await pedir<Token>("/auth/login", {
+          method: "POST",
+          cuerpo: {
+            email: formulario.get("email"),
+            contrasena: formulario.get("contrasena"),
+          },
+        }),
+      );
     } catch (falla) {
-      setError(falla instanceof ErrorDeApi ? falla.message : t.errorGenerico);
+      setError(mensajeDe(falla, t.errorGenerico));
       setEntrando(false);
     }
   }
 
   return (
-    <main
-      id="contenido"
-      className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-6 px-4 py-12"
+    <MarcoDeAcceso
+      titulo={t.ingresarTitulo}
+      texto={t.ingresarTexto}
+      pie={
+        <>
+          <Link href="/registro" className="hover:text-texto">
+            {t.noTengoCuenta}
+          </Link>
+          <Link href="/verificar" className="text-xs hover:text-texto">
+            {t.tengoCodigo}
+          </Link>
+        </>
+      }
     >
-      <h1 className="text-2xl font-bold">{t.entrar}</h1>
-
       <form onSubmit={ingresar} className="flex flex-col gap-4">
-        <label className="flex flex-col gap-1 text-sm">
-          {t.correo}
-          <input
-            name="email"
-            type="email"
-            required
-            autoComplete="email"
-            className="rounded-lg border border-borde bg-superficie px-3 py-2 text-base"
-          />
-        </label>
-
-        <label className="flex flex-col gap-1 text-sm">
-          {t.contrasena}
-          <input
+        <Campo
+          etiqueta={t.correo}
+          name="email"
+          type="email"
+          required
+          autoComplete="email"
+          autoFocus
+        />
+        <div className="flex flex-col gap-1.5">
+          <Campo
+            etiqueta={t.contrasena}
             name="contrasena"
             type="password"
             required
             autoComplete="current-password"
-            className="rounded-lg border border-borde bg-superficie px-3 py-2 text-base"
           />
-        </label>
+          <Link
+            href="/recuperar"
+            className="self-end text-xs text-suave hover:text-texto"
+          >
+            {t.olvide}
+          </Link>
+        </div>
 
-        {error && (
-          <p role="alert" className="text-sm text-alerta">
-            {error}
-          </p>
-        )}
+        {error && <Alerta>{error}</Alerta>}
 
-        <button
-          type="submit"
-          disabled={entrando}
-          className="rounded-lg bg-marca-500 px-4 py-2.5 font-medium text-white hover:bg-marca-700 disabled:opacity-70"
-        >
+        <Boton type="submit" variante="primario" tamano="lg" cargando={entrando}>
           {entrando ? t.ingresando : t.entrar}
-        </button>
+        </Boton>
       </form>
 
-      <div className="flex flex-col gap-3 border-t border-borde pt-6 text-center text-sm">
-        <BotonDemo />
-        <Link href="/" className="text-suave underline">
-          {t.volverAlInicio}
-        </Link>
+      <Separador />
+      <div className="flex flex-col gap-3">
+        <BotonGoogle />
+        <BotonDemo variante="secundario" />
       </div>
-    </main>
+    </MarcoDeAcceso>
   );
 }

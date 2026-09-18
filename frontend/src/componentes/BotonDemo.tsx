@@ -1,16 +1,26 @@
 "use client";
 
+import { ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { Boton } from "@/componentes/ui/Boton";
 import { useTextos } from "@/i18n/proveedor";
-import { ErrorDeApi, pedir } from "@/lib/api";
+import { mensajeDe, pedir } from "@/lib/api";
 import { marcarSesion } from "@/lib/sesion";
 
 type SesionDemo = { expira_en: string };
 
 /** Abre un sandbox y entra directo al panel (RF-J01). */
-export function BotonDemo({ className = "" }: { className?: string }) {
+export function BotonDemo({
+  variante = "primario",
+  tamano = "lg",
+  className = "",
+}: {
+  variante?: "primario" | "secundario";
+  tamano?: "md" | "lg";
+  className?: string;
+}) {
   const { t } = useTextos();
   const router = useRouter();
   const [abriendo, setAbriendo] = useState(false);
@@ -30,23 +40,25 @@ export function BotonDemo({ className = "" }: { className?: string }) {
       marcarSesion(minutos);
       router.push("/panel");
     } catch (falla) {
-      setError(falla instanceof ErrorDeApi ? falla.message : t.errorGenerico);
+      setError(mensajeDe(falla, t.errorGenerico));
       setAbriendo(false);
     }
   }
 
   return (
-    <div className="flex flex-col items-center gap-2">
-      <button
-        type="button"
+    <div className={`flex flex-col gap-2 ${className}`}>
+      <Boton
+        variante={variante}
+        tamano={tamano}
         onClick={abrir}
-        disabled={abriendo}
-        className={`rounded-lg bg-marca-500 px-6 py-3 font-medium text-white hover:bg-marca-700 disabled:opacity-70 ${className}`}
+        cargando={abriendo}
+        className="w-full"
       >
         {abriendo ? t.abriendoDemo : t.probarDemo}
-      </button>
+        {!abriendo && <ArrowRight size={16} aria-hidden />}
+      </Boton>
       {error && (
-        <p role="alert" className="text-sm text-alerta">
+        <p role="alert" className="text-center text-sm text-alerta">
           {error}
         </p>
       )}

@@ -58,11 +58,20 @@ export async function pedir<T>(ruta: string, opciones: Opciones = {}) {
     respuesta = await fetch(`${URL_DE_LA_API}${ruta}`, {
       ...resto,
       credentials: "include",
+      // Un FormData (subida de archivos) viaja tal cual: el navegador
+      // arma el encabezado multipart con su separador.
       headers: {
-        ...(cuerpo === undefined ? {} : { "Content-Type": "application/json" }),
+        ...(cuerpo === undefined || cuerpo instanceof FormData
+          ? {}
+          : { "Content-Type": "application/json" }),
         ...headers,
       },
-      body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo),
+      body:
+        cuerpo === undefined
+          ? undefined
+          : cuerpo instanceof FormData
+            ? cuerpo
+            : JSON.stringify(cuerpo),
     });
   } catch {
     // Sin red, o la API caida: no hay respuesta que interpretar.
@@ -101,3 +110,33 @@ export async function descargar(ruta: string, nombre: string) {
   enlace.click();
   URL.revokeObjectURL(enlace.href);
 }
+
+/**
+ * Arma "?a=1&b=2" salteando los valores vacios, para que un filtro sin
+ * elegir no viaje como "a=" y la API lo tome como texto vacio.
+ */
+export function consulta(
+  parametros: Record<string, string | number | boolean | null | undefined>,
+) {
+  const partes = new URLSearchParams();
+  for (const [clave, valor] of Object.entries(parametros)) {
+    if (valor === undefined || valor === null || valor === "" || valor === false)
+      continue;
+    partes.set(clave, String(valor));
+  }
+  const texto = partes.toString();
+  return texto ? `?${texto}` : "";
+}
+
+/** Texto para mostrar de una falla cualquiera. */
+export function mensajeDe(falla: unknown, respaldo: string) {
+  return falla instanceof ErrorDeApi ? falla.message : respaldo;
+}
+
+/** Forma de las respuestas paginadas de la API. */
+export type Pagina<T> = {
+  items: T[];
+  total: number;
+  pagina: number;
+  limite: number;
+};

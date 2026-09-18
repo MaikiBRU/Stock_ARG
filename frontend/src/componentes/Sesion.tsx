@@ -1,5 +1,6 @@
 "use client";
 
+import { LoaderCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   createContext,
@@ -54,9 +55,13 @@ export function ProveedorDeSesion({ children }: { children: ReactNode }) {
 
   if (!usuario) {
     return (
-      <p role="status" className="p-6 text-suave">
+      <div
+        role="status"
+        className="flex min-h-dvh items-center justify-center gap-2 text-sm text-suave"
+      >
+        <LoaderCircle size={16} className="animate-spin" aria-hidden />
         {t.cargando}
-      </p>
+      </div>
     );
   }
   return <Contexto.Provider value={usuario}>{children}</Contexto.Provider>;

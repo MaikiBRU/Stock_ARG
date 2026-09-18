@@ -1,53 +1,115 @@
 @import "tailwindcss";
 
-/* Identidad: azul oscuro para el armazon, blanco para el trabajo.
-   Los contrastes estan elegidos para cumplir AA (RNF-13). */
+/* Identidad: neutros limpios y un azul marino como unico color de marca.
+   Los pares texto/fondo cumplen contraste AA en ambos temas (RNF-13). */
 @theme {
-  --color-marca-900: #0a1a30;
-  --color-marca-800: #102a4c;
-  --color-marca-700: #1b3f6e;
-  --color-marca-500: #1d6fd4;
-  --color-marca-100: #dbeafe;
+  --font-sans: var(--fuente-geist), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--fuente-geist-mono), ui-monospace, monospace;
 
-  --color-fondo: #f4f7fb;
+  --color-fondo: #f7f8fa;
   --color-superficie: #ffffff;
-  --color-borde: #d8e1ee;
-  --color-texto: #0f172a;
-  --color-suave: #51617c;
+  --color-sutil: #f1f3f6;
+  --color-borde: #e3e6eb;
+  --color-borde-fuerte: #cdd2da;
+  --color-texto: #0e1525;
+  --color-suave: #5a6475;
 
-  --color-alerta: #b42318;
-  --color-aviso: #b54708;
+  --color-marca: #1f3d8f;
+  --color-marca-hover: #183276;
+  --color-marca-suave: #edf1fb;
+  --color-marca-texto: #1f3d8f;
+  --color-sobre-marca: #ffffff;
+
+  --color-alerta: #c4291c;
+  --color-alerta-suave: #fdf0ef;
+  --color-aviso: #a64a06;
+  --color-aviso-suave: #fef7e8;
   --color-ok: #067647;
+  --color-ok-suave: #eaf8f0;
+
+  --shadow-flotante:
+    0 1px 2px rgb(14 21 37 / 0.04), 0 8px 24px -6px rgb(14 21 37 / 0.12);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-fondo: #0a1424;
-    --color-superficie: #111f36;
-    --color-borde: #22334f;
-    --color-texto: #e8eefb;
-    --color-suave: #a3b3cc;
-    --color-marca-100: #1b3f6e;
+    --color-fondo: #0b0e14;
+    --color-superficie: #12161f;
+    --color-sutil: #1a1f2b;
+    --color-borde: #242b38;
+    --color-borde-fuerte: #333c4d;
+    --color-texto: #e8ebf1;
+    --color-suave: #9aa3b4;
+
+    --color-marca: #4169d8;
+    --color-marca-hover: #5479e0;
+    --color-marca-suave: #18213a;
+    --color-marca-texto: #9fb5f3;
+
+    --color-alerta: #f2776c;
+    --color-alerta-suave: #2b1616;
+    --color-aviso: #f2b54a;
+    --color-aviso-suave: #2a2112;
+    --color-ok: #4fcf8e;
+    --color-ok-suave: #112a1d;
+
+    --shadow-flotante:
+      0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px -6px rgb(0 0 0 / 0.5);
+
+    color-scheme: dark;
   }
 }
 
 body {
   background: var(--color-fondo);
   color: var(--color-texto);
-  font-family:
-    system-ui,
-    -apple-system,
-    "Segoe UI",
-    Roboto,
-    sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Los importes se alinean en columna. */
+.cifra {
+  font-variant-numeric: tabular-nums;
 }
 
 /* El foco tiene que verse siempre: hay pantallas que se operan sin
    mouse (RF-E16, RNF-13). */
 :focus-visible {
-  outline: 3px solid var(--color-marca-500);
+  outline: 2px solid var(--color-marca);
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: 6px;
+}
+
+dialog::backdrop {
+  background: rgb(8 12 20 / 0.45);
+  backdrop-filter: blur(2px);
+}
+
+@keyframes aparecer {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.aparecer {
+  animation: aparecer 160ms ease-out;
+}
+
+@keyframes latido {
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.esqueleto {
+  background: var(--color-sutil);
+  border-radius: 8px;
+  animation: latido 1.4s ease-in-out infinite;
 }
 
 /* Quien pidio menos movimiento no lo recibe. */

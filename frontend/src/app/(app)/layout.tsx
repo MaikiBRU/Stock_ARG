@@ -25,11 +25,14 @@ export default async function LayoutDeLaAplicacion({
 
   return (
     <ProveedorDeSesion>
-      <div className="flex min-h-dvh flex-col sm:flex-row">
+      <div className="min-h-dvh lg:pl-60">
         <Navegacion />
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex min-h-dvh flex-col">
           <FranjaDemo />
-          <main id="contenido" className="flex-1 px-4 py-6 sm:px-8">
+          <main
+            id="contenido"
+            className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8"
+          >
             {children}
           </main>
         </div>

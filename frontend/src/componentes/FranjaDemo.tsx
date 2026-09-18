@@ -1,5 +1,6 @@
 "use client";
 
+import { RotateCcw, Timer } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -93,6 +94,8 @@ export function FranjaDemo() {
     setOcupada(true);
     try {
       await pedir("/demo/sesion/terminar", { method: "POST" });
+    } catch {
+      // Si la API no contesta, la sesion vence sola igual.
     } finally {
       olvidarSesion();
       router.push("/");
@@ -100,20 +103,29 @@ export function FranjaDemo() {
   }
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2 bg-marca-100 px-4 py-2 text-sm text-marca-800">
-      <p>
-        <strong>{t.modoDemo}</strong>
-        {" — "}
-        {t.terminaEn} {minutos}:{segundos}
+    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-marca/15 bg-marca-suave px-4 py-2 text-[13px] text-marca-texto sm:px-6 lg:px-8">
+      <p className="flex items-center gap-2">
+        <span className="relative flex size-2" aria-hidden>
+          <span className="absolute inline-flex size-full animate-ping rounded-full bg-marca opacity-40" />
+          <span className="relative inline-flex size-2 rounded-full bg-marca" />
+        </span>
+        <strong className="font-semibold">{t.modoDemo}</strong>
+        <span className="flex items-center gap-1 opacity-80">
+          <Timer size={13} aria-hidden />
+          {t.terminaEn}{" "}
+          <span className="cifra font-medium">
+            {minutos}:{segundos}
+          </span>
+        </span>
       </p>
       <div className="flex flex-wrap items-center gap-2">
-        <label className="flex items-center gap-2">
-          {t.verComo}
+        <label className="flex items-center gap-1.5">
+          <span className="opacity-80">{t.verComo}</span>
           <select
             value={usuario.rol}
             disabled={ocupada}
             onChange={(e) => cambiarRol(e.target.value as Rol)}
-            className="rounded border border-marca-700 bg-transparent px-2 py-1"
+            className="h-7 cursor-pointer rounded-md border border-marca/25 bg-superficie px-1.5 text-[13px] text-texto"
           >
             {ROLES.map((rol) => (
               <option key={rol} value={rol}>
@@ -126,15 +138,16 @@ export function FranjaDemo() {
           type="button"
           onClick={reiniciar}
           disabled={ocupada}
-          className="rounded border border-marca-700 px-3 py-1 disabled:opacity-60"
+          className="inline-flex h-7 items-center gap-1 rounded-md px-2 font-medium hover:bg-marca/10 disabled:opacity-60"
         >
+          <RotateCcw size={13} aria-hidden />
           {t.reiniciarDemo}
         </button>
         <button
           type="button"
           onClick={terminar}
           disabled={ocupada}
-          className="rounded bg-marca-700 px-3 py-1 text-white disabled:opacity-60"
+          className="inline-flex h-7 items-center rounded-md bg-marca px-2.5 font-medium text-sobre-marca hover:bg-marca-hover disabled:opacity-60"
         >
           {t.salirDemo}
         </button>
