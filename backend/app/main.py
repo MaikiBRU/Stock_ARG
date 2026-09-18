@@ -171,7 +171,9 @@ def crear_app() -> FastAPI:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=ajustes.origenes_permitidos,
-        allow_credentials=False,
+        # La sesion viaja en una cookie: el navegador solo la manda si el
+        # origen esta en la lista de arriba, que nunca es un comodin.
+        allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
         allow_headers=["Authorization", "Content-Type"],
     )

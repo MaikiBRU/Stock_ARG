@@ -1,8 +1,16 @@
 """Endpoints de cuentas (modulo A)."""
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Request,
+    Response,
+    status,
+)
 from sqlalchemy.orm import Session
 
+from app.api import cookies
 from app.api.deps import ip_del_cliente, obtener_usuario_actual, rechazar_demo
 from app.core.config import Settings, get_settings
 from app.db.session import get_db
@@ -93,6 +101,7 @@ def registro(
 def verificar(
     datos: VerificacionEntrada,
     request: Request,
+    respuesta: Response,
     db: Session = Depends(get_db),
     ajustes: Settings = Depends(get_settings),
 ) -> TokenSalida:
@@ -114,6 +123,9 @@ def verificar(
 
     token, minutos = servicio.emitir_token_de_sesion(usuario)
     db.commit()
+    # El navegador se queda con la cookie; el token del cuerpo es para
+    # los clientes que no son un navegador.
+    cookies.fijar_sesion(respuesta, token, minutos)
     return TokenSalida(
         access_token=token,
         expira_en_minutos=minutos,
@@ -150,6 +162,7 @@ def reenviar(
 def login(
     datos: LoginEntrada,
     request: Request,
+    respuesta: Response,
     db: Session = Depends(get_db),
     ajustes: Settings = Depends(get_settings),
 ) -> TokenSalida:
@@ -177,6 +190,9 @@ def login(
 
     token, minutos = servicio.emitir_token_de_sesion(usuario)
     db.commit()
+    # El navegador se queda con la cookie; el token del cuerpo es para
+    # los clientes que no son un navegador.
+    cookies.fijar_sesion(respuesta, token, minutos)
     return TokenSalida(
         access_token=token,
         expira_en_minutos=minutos,
@@ -189,6 +205,7 @@ def login(
 def ingresar_con_google(
     datos: GoogleEntrada,
     request: Request,
+    respuesta: Response,
     db: Session = Depends(get_db),
     ajustes: Settings = Depends(get_settings),
 ) -> TokenSalida:
@@ -226,6 +243,9 @@ def ingresar_con_google(
 
     token, minutos = servicio.emitir_token_de_sesion(usuario)
     db.commit()
+    # El navegador se queda con la cookie; el token del cuerpo es para
+    # los clientes que no son un navegador.
+    cookies.fijar_sesion(respuesta, token, minutos)
     return TokenSalida(
         access_token=token,
         expira_en_minutos=minutos,
@@ -298,6 +318,7 @@ def editar_perfil(
 @router.put("/contrasena", response_model=TokenSalida)
 def cambiar_contrasena(
     datos: CambioContrasenaEntrada,
+    respuesta: Response,
     db: Session = Depends(get_db),
     # Los usuarios de la demo no tienen contrasena y a un sandbox se
     # entra por token: ponerle una no sirve para nada.
@@ -319,6 +340,9 @@ def cambiar_contrasena(
 
     token, minutos = servicio.emitir_token_de_sesion(usuario)
     db.commit()
+    # El navegador se queda con la cookie; el token del cuerpo es para
+    # los clientes que no son un navegador.
+    cookies.fijar_sesion(respuesta, token, minutos)
     return TokenSalida(
         access_token=token,
         expira_en_minutos=minutos,
@@ -329,6 +353,7 @@ def cambiar_contrasena(
 
 @router.post("/logout", response_model=MensajeSalida)
 def logout(
+    respuesta: Response,
     db: Session = Depends(get_db),
     usuario: Usuario = Depends(obtener_usuario_actual),
 ) -> MensajeSalida:
@@ -341,4 +366,5 @@ def logout(
     """
     servicio.revocar_sesiones(usuario)
     db.commit()
+    cookies.borrar_sesion(respuesta)
     return MensajeSalida(mensaje="La sesion se cerro.")

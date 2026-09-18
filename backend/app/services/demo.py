@@ -140,6 +140,12 @@ def esta_vigente(sesion: SesionDemo, ahora: datetime | None = None) -> bool:
     return (ahora or _ahora()) < vence(sesion)
 
 
+def minutos_restantes(sesion: SesionDemo) -> int:
+    """Minutos que le quedan a la sesion, al menos uno."""
+    restante = (vence(sesion) - _ahora()).total_seconds()
+    return max(1, math.ceil(restante / 60))
+
+
 def _vencidas(ahora: datetime) -> ColumnElement[bool]:
     """Condicion SQL equivalente a no estar vigente."""
     inactividad = timedelta(minutes=get_settings().demo_idle_timeout_minutes)

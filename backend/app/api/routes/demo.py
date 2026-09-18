@@ -2,9 +2,18 @@
 
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    Header,
+    HTTPException,
+    Request,
+    Response,
+    status,
+)
 from sqlalchemy.orm import Session
 
+from app.api import cookies
 from app.api.deps import exigir_demo, ip_del_cliente
 from app.core.config import get_settings
 from app.core.security import comparar_seguro, hash_opaco
@@ -41,10 +50,14 @@ router = APIRouter(
 )
 
 
-def _salida(sesion: SesionDemo, usuario: Usuario) -> SesionDemoSalida:
-    """Token del sandbox para ese usuario."""
+def _salida(
+    respuesta: Response, sesion: SesionDemo, usuario: Usuario
+) -> SesionDemoSalida:
+    """Token del sandbox para ese usuario, tambien como cookie."""
+    token = servicio.emitir_token(sesion, usuario)
+    cookies.fijar_sesion(respuesta, token, servicio.minutos_restantes(sesion))
     return SesionDemoSalida(
-        access_token=servicio.emitir_token(sesion, usuario),
+        access_token=token,
         expira_en=servicio.vence(sesion),
         usuario=UsuarioSalida.model_validate(usuario),
         roles=list(Rol),
@@ -69,6 +82,7 @@ def _sesion_de(db: Session, usuario: Usuario) -> SesionDemo:
 )
 def crear_sesion(
     request: Request,
+    respuesta: Response,
     db: Session = Depends(get_db),
 ) -> SesionDemoSalida:
     """Abre un sandbox sin credenciales ni cuerpo (RF-J01, RF-J07)."""
@@ -90,7 +104,7 @@ def crear_sesion(
             detail=error.mensaje,
             headers={"Retry-After": "300"},
         ) from error
-    return _salida(sesion, propietario)
+    return _salida(respuesta, sesion, propietario)
 
 
 @router.get("/sesion", response_model=EstadoDemoSalida)
@@ -117,6 +131,7 @@ def estado(
 @router.post("/sesion/rol", response_model=SesionDemoSalida)
 def cambiar_rol(
     datos: RolDemoEntrada,
+    respuesta: Response,
     db: Session = Depends(get_db),
     usuario: Usuario = Depends(exigir_demo),
 ) -> SesionDemoSalida:
@@ -128,11 +143,12 @@ def cambiar_rol(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="No hay un usuario activo con ese rol en la demo.",
         )
-    return _salida(sesion, elegido)
+    return _salida(respuesta, sesion, elegido)
 
 
 @router.post("/sesion/reiniciar", response_model=SesionDemoSalida)
 def reiniciar(
+    respuesta: Response,
     db: Session = Depends(get_db),
     usuario: Usuario = Depends(exigir_demo),
 ) -> SesionDemoSalida:
@@ -160,16 +176,18 @@ def reiniciar(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="No hay un usuario activo con ese rol en la demo.",
         )
-    return _salida(sesion, elegido)
+    return _salida(respuesta, sesion, elegido)
 
 
 @router.post("/sesion/terminar", response_model=MensajeSalida)
 def terminar(
+    respuesta: Response,
     db: Session = Depends(get_db),
     usuario: Usuario = Depends(exigir_demo),
 ) -> MensajeSalida:
     """Borra el sandbox y todos sus datos en el acto (RF-J08)."""
     servicio.terminar(db, _sesion_de(db, usuario).id)
+    cookies.borrar_sesion(respuesta)
     return MensajeSalida(mensaje="La demo termino y sus datos se borraron.")
 
 

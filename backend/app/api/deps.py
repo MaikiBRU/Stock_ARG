@@ -4,10 +4,11 @@ from collections.abc import Callable
 from typing import Any
 
 import jwt
-from fastapi import Depends, HTTPException, Request, status
+from fastapi import Cookie, Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
+from app.api import cookies
 from app.core import ajustes_vivos
 from app.core.security import leer_token
 from app.db import particion
@@ -68,9 +69,15 @@ def _usuario_de_la_aplicacion(db: Session, carga: dict[str, Any]) -> Usuario:
 
 def obtener_usuario_actual(
     credenciales: HTTPAuthorizationCredentials | None = Depends(esquema_bearer),
+    sesion_en_cookie: str | None = Cookie(default=None, alias=cookies.NOMBRE),
     db: Session = Depends(get_db),
 ) -> Usuario:
     """Resuelve el usuario autenticado a partir del token.
+
+    El token puede venir en la cabecera o en la cookie de sesion. La
+    cabecera gana: es la que usan las pruebas y los clientes que no son
+    un navegador, y asi una cookie vieja no puede tapar un token que se
+    mando a proposito.
 
     Acepta dos tipos de token. Uno de "acceso" abre un usuario real; uno
     de "demo" abre el usuario de un sandbox vigente con el rol elegido y
@@ -81,13 +88,13 @@ def obtener_usuario_actual(
     encierra ahi toda la peticion (ver app.db.particion). Un endpoint
     nuevo queda aislado sin tener que acordarse de nada.
     """
-    if credenciales is None or not credenciales.credentials:
+    token = credenciales.credentials if credenciales else None
+    token = token or sesion_en_cookie
+    if not token:
         raise CREDENCIALES_INVALIDAS
 
     try:
-        carga = leer_token(
-            credenciales.credentials, tipo_esperado=("acceso", "demo")
-        )
+        carga = leer_token(token, tipo_esperado=("acceso", "demo"))
     except jwt.PyJWTError as error:
         raise CREDENCIALES_INVALIDAS from error
 

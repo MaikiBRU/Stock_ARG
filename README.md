@@ -115,6 +115,9 @@ admitiendo duplicados.
 - Contraseñas con bcrypt; nunca se escriben en un log.
 - Cerrar sesión invalida de verdad el token, y cambiar o recuperar la
   contraseña cierra las demás sesiones abiertas.
+- La sesión del navegador viaja en una cookie `HttpOnly`, fuera del alcance de
+  cualquier XSS; el token por cabecera queda para los clientes que no son un
+  navegador.
 - Los totales se calculan en el servidor: un total enviado por el cliente se
   rechaza.
 - Las operaciones de stock corren en transacción con bloqueo de fila.

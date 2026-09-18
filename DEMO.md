@@ -46,6 +46,11 @@ una segunda identidad, paralela, que comparte la base pero no los datos.
    { "sub": "demo:<id>", "typ": "demo", "sid": "<id>", "rol": "propietario", "sv": 0, "exp": "<vencimiento>" }
    ```
 
+   El mismo token vuelve como cookie `HttpOnly`, que es la que usa el
+   navegador; el del cuerpo queda para `curl` y para los clientes que no son un
+   navegador. Guardarlo en `localStorage` sería entregárselo entero al primer
+   XSS.
+
 La sesión y la semilla van en una sola transacción. Si algo falla a mitad de
 camino no queda ni la sesión ni ninguna fila suelta.
 
