@@ -20,7 +20,7 @@ from app.api.deps import (
     exigir_gestion,
 )
 from app.db.session import get_db
-from app.models import Usuario
+from app.models import Compra, Usuario
 from app.schemas.auth import MensajeSalida
 from app.schemas.compra import (
     AnulacionCompraEntrada,
@@ -37,7 +37,7 @@ from app.schemas.producto import (
     ImportacionSalida,
     ProductoSalida,
 )
-from app.services import archivos, exportacion, importacion
+from app.services import archivos, exportacion, importacion, nombres
 from app.services import compras as servicio_compras
 from app.services import proveedores as servicio
 from app.services.productos import ErrorDeProducto, NoEncontrado
@@ -366,6 +366,24 @@ def eliminar(
 # --- compras (RF-G03, RF-G04) --------------------------------------------
 
 
+def _con_proveedor[S: (CompraSalida, CompraResumenSalida)](
+    db: Session,
+    compras: list[Compra],
+    esquema: type[S],
+    id_sesion_demo: str | None,
+) -> list[S]:
+    """Convierte las compras y les agrega la razon social del proveedor."""
+    proveedores = nombres.de_proveedores(
+        db, (c.id_proveedor for c in compras), id_sesion_demo
+    )
+    salida = []
+    for compra in compras:
+        fila = esquema.model_validate(compra)
+        fila.proveedor = proveedores.get(compra.id_proveedor)
+        salida.append(fila)
+    return salida
+
+
 @router.get("/compras", response_model=Pagina[CompraResumenSalida])
 def listar_compras(
     id_proveedor: int | None = None,
@@ -387,7 +405,9 @@ def listar_compras(
         id_sesion_demo=usuario.id_sesion_demo,
     )
     return Pagina[CompraResumenSalida](
-        items=[CompraResumenSalida.model_validate(c) for c in items],
+        items=_con_proveedor(
+            db, items, CompraResumenSalida, usuario.id_sesion_demo
+        ),
         total=total,
         pagina=pagina,
         limite=limite,
@@ -431,7 +451,7 @@ def registrar_compra(
         raise _error(error) from error
 
     db.commit()
-    return CompraSalida.model_validate(compra)
+    return _con_proveedor(db, [compra], CompraSalida, usuario.id_sesion_demo)[0]
 
 
 @router.get("/compras/{id_compra}", response_model=CompraSalida)
@@ -445,7 +465,7 @@ def obtener_compra(
         compra = servicio_compras.obtener(db, id_compra, usuario.id_sesion_demo)
     except ErrorDeProducto as error:
         raise _error(error) from error
-    return CompraSalida.model_validate(compra)
+    return _con_proveedor(db, [compra], CompraSalida, usuario.id_sesion_demo)[0]
 
 
 @router.post("/compras/{id_compra}/anular", response_model=CompraSalida)
@@ -468,4 +488,4 @@ def anular_compra(
         db.rollback()
         raise _error(error) from error
     db.commit()
-    return CompraSalida.model_validate(compra)
+    return _con_proveedor(db, [compra], CompraSalida, usuario.id_sesion_demo)[0]

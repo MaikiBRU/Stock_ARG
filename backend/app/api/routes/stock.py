@@ -20,7 +20,7 @@ from app.api.deps import (
 )
 from app.core import tiempo
 from app.db.session import get_db
-from app.models import Producto, TipoMovimiento, Usuario
+from app.models import MovimientoStock, Producto, TipoMovimiento, Usuario
 from app.schemas.comunes import LIMITE_MAXIMO, LIMITE_POR_DEFECTO, Pagina
 from app.schemas.stock import (
     BajaEntrada,
@@ -28,7 +28,7 @@ from app.schemas.stock import (
     MovimientoSalida,
     ResumenStock,
 )
-from app.services import exportacion
+from app.services import exportacion, nombres
 from app.services import stock as servicio
 from app.services.productos import ErrorDeProducto, NoEncontrado
 
@@ -47,6 +47,25 @@ def _error(excepcion: ErrorDeProducto) -> HTTPException:
         else status.HTTP_400_BAD_REQUEST
     )
     return HTTPException(status_code=codigo, detail=excepcion.mensaje)
+
+
+def _con_nombres(
+    db: Session, movimientos: list[MovimientoStock], id_sesion_demo: str | None
+) -> list[MovimientoSalida]:
+    """Convierte los movimientos y les agrega los nombres para mostrar."""
+    productos = nombres.de_productos(
+        db, (m.id_producto for m in movimientos), id_sesion_demo
+    )
+    usuarios = nombres.de_usuarios(
+        db, (m.id_usuario for m in movimientos), id_sesion_demo
+    )
+    salida = []
+    for movimiento in movimientos:
+        fila = MovimientoSalida.model_validate(movimiento)
+        fila.producto = productos.get(movimiento.id_producto)
+        fila.usuario = usuarios.get(movimiento.id_usuario)
+        salida.append(fila)
+    return salida
 
 
 @router.get("/resumen", response_model=ResumenStock)
@@ -81,7 +100,7 @@ def listar_movimientos(
         id_sesion_demo=usuario.id_sesion_demo,
     )
     return Pagina[MovimientoSalida](
-        items=[MovimientoSalida.model_validate(m) for m in items],
+        items=_con_nombres(db, items, usuario.id_sesion_demo),
         total=total,
         pagina=pagina,
         limite=limite,
@@ -113,7 +132,7 @@ def registrar_movimiento(
         db.rollback()
         raise _error(error) from error
     db.commit()
-    return MovimientoSalida.model_validate(movimiento)
+    return _con_nombres(db, [movimiento], usuario.id_sesion_demo)[0]
 
 
 @router.post(
@@ -141,7 +160,7 @@ def registrar_baja(
         db.rollback()
         raise _error(error) from error
     db.commit()
-    return MovimientoSalida.model_validate(movimiento)
+    return _con_nombres(db, [movimiento], usuario.id_sesion_demo)[0]
 
 
 # --- exportacion (RF-D09) ------------------------------------------------

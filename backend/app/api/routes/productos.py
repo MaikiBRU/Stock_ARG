@@ -247,11 +247,19 @@ def actualizar(
     usuario: Usuario = Depends(exigir_gestion),
 ) -> ProductoSalida:
     """Edicion de producto. Propietario o encargado (RF-C01)."""
+    cambios = datos.model_dump()
+    if (
+        not usuario.puede_administrar
+        or "precio_costo" not in datos.model_fields_set
+    ):
+        # El costo solo lo cambia quien puede verlo, y solo si lo mando:
+        # si no, el valor por defecto del esquema (cero) lo borraria.
+        cambios.pop("precio_costo")
     try:
         producto = servicio.actualizar_producto(
             db,
             id_producto,
-            datos.model_dump(),
+            cambios,
             id_sesion_demo=usuario.id_sesion_demo,
         )
     except servicio.ErrorDeProducto as error:

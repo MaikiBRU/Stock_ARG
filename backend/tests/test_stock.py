@@ -442,3 +442,16 @@ def test_exportar_movimientos_sin_datos_no_falla(client, sesiones):
 
     assert respuesta.status_code == 200
     assert respuesta.content.startswith(b"%PDF")
+
+
+def test_el_historial_trae_producto_y_usuario(client, sesiones):
+    """Los movimientos se leen con nombres, no con ids."""
+    duena = sesiones["propietario"]
+    producto = _producto(client, duena)
+    creado = _mover(client, duena, producto["id"], "entrada", 3).json()
+
+    fila = client.get("/stock/movimientos", headers=duena).json()["items"][0]
+
+    for datos in (creado, fila):
+        assert datos["producto"] == "Alfajor triple"
+        assert datos["usuario"] == "Propietario"

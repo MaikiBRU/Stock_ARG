@@ -123,6 +123,8 @@ class CompraSalida(BaseModel):
     anulada_en: datetime | None
     motivo_anulacion: str | None
     items: list[CompraItemSalida]
+    # Nombre para mostrar; lo completa la ruta.
+    proveedor: str | None = None
 
 
 class CompraResumenSalida(BaseModel):
@@ -136,6 +138,8 @@ class CompraResumenSalida(BaseModel):
     comprobante: str | None
     estado: EstadoCompra
     id_proveedor: int
+    # Nombre para mostrar; lo completa la ruta.
+    proveedor: str | None = None
 
 
 class ResumenProveedorSalida(BaseModel):

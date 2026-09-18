@@ -913,3 +913,25 @@ def test_las_rutas_de_contactos_respetan_el_orden_de_declaracion():
     assert rutas_proveedores.index(
         "/proveedores/exportar"
     ) < rutas_proveedores.index("/proveedores/{id_proveedor}")
+
+
+def test_las_compras_traen_la_razon_social(client, sesiones, deposito):
+    duena = sesiones["propietario"]
+    compra = _comprar(
+        client,
+        duena,
+        deposito["proveedor"]["id"],
+        [
+            {
+                "id_producto": deposito["producto"]["id"],
+                "cantidad": 2,
+                "costo_unitario": "700.00",
+            }
+        ],
+    ).json()
+
+    fila = client.get("/compras", headers=duena).json()["items"][0]
+    detalle = client.get(f"/compras/{compra['id']}", headers=duena).json()
+
+    for datos in (compra, fila, detalle):
+        assert datos["proveedor"] == "Distribuidora del Centro"

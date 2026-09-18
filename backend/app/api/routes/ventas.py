@@ -28,7 +28,7 @@ from app.schemas.venta import (
     VentaResumenSalida,
     VentaSalida,
 )
-from app.services import exportacion
+from app.services import exportacion, nombres
 from app.services import ventas as servicio
 from app.services.productos import ErrorDeProducto, NoEncontrado
 
@@ -65,6 +65,34 @@ def _visible_para(usuario: Usuario, venta: Venta) -> bool:
     completo es de la gestion (matriz de permisos, seccion 05).
     """
     return usuario.puede_gestionar or venta.id_usuario == usuario.id
+
+
+def _con_nombres[S: (VentaSalida, VentaResumenSalida)](
+    db: Session,
+    ventas: list[Venta],
+    esquema: type[S],
+    id_sesion_demo: str | None,
+) -> list[S]:
+    """Convierte las ventas y les agrega los nombres para mostrar."""
+    medios = nombres.de_medios(
+        db, (v.id_medio_pago for v in ventas), id_sesion_demo
+    )
+    usuarios = nombres.de_usuarios(
+        db, (v.id_usuario for v in ventas), id_sesion_demo
+    )
+    clientes = nombres.de_clientes(
+        db, (v.id_cliente for v in ventas), id_sesion_demo
+    )
+    salida = []
+    for venta in ventas:
+        fila = esquema.model_validate(venta)
+        fila.medio_pago = medios.get(venta.id_medio_pago)
+        fila.vendedor = usuarios.get(venta.id_usuario)
+        fila.cliente = (
+            clientes.get(venta.id_cliente) if venta.id_cliente else None
+        )
+        salida.append(fila)
+    return salida
 
 
 @router.get("", response_model=Pagina[VentaResumenSalida])
@@ -104,7 +132,9 @@ def listar(
         id_sesion_demo=usuario.id_sesion_demo,
     )
     return Pagina[VentaResumenSalida](
-        items=[VentaResumenSalida.model_validate(v) for v in items],
+        items=_con_nombres(
+            db, items, VentaResumenSalida, usuario.id_sesion_demo
+        ),
         total=total,
         pagina=pagina,
         limite=limite,
@@ -151,10 +181,14 @@ def exportar(
             v.descuento,
             v.total,
             v.estado.value,
-            v.id_usuario,
-            v.id_cliente,
+            fila.vendedor,
+            fila.cliente,
         ]
-        for v in items
+        for v, fila in zip(
+            items,
+            _con_nombres(db, items, VentaResumenSalida, usuario.id_sesion_demo),
+            strict=True,
+        )
     ]
 
     if formato == "pdf":
@@ -210,7 +244,7 @@ def registrar(
         raise _error(error) from error
 
     db.commit()
-    return VentaSalida.model_validate(venta)
+    return _con_nombres(db, [venta], VentaSalida, usuario.id_sesion_demo)[0]
 
 
 @router.get("/{id_venta}", response_model=VentaSalida)
@@ -232,7 +266,7 @@ def obtener(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="No existe la venta.",
         )
-    return VentaSalida.model_validate(venta)
+    return _con_nombres(db, [venta], VentaSalida, usuario.id_sesion_demo)[0]
 
 
 @router.get(
@@ -310,4 +344,4 @@ def anular(
         db.rollback()
         raise _error(error) from error
     db.commit()
-    return VentaSalida.model_validate(venta)
+    return _con_nombres(db, [venta], VentaSalida, usuario.id_sesion_demo)[0]

@@ -97,6 +97,10 @@ class VentaSalida(BaseModel):
     anulada_en: datetime | None
     motivo_anulacion: str | None
     items: list[VentaItemSalida]
+    # Nombres para mostrar; los completa la ruta, no vienen del modelo.
+    medio_pago: str | None = None
+    vendedor: str | None = None
+    cliente: str | None = None
 
 
 class VentaResumenSalida(BaseModel):
@@ -112,6 +116,10 @@ class VentaResumenSalida(BaseModel):
     id_medio_pago: int
     id_cliente: int | None
     cantidad_articulos: int
+    # Nombres para mostrar; los completa la ruta, no vienen del modelo.
+    medio_pago: str | None = None
+    vendedor: str | None = None
+    cliente: str | None = None
 
 
 class MedioPagoEntrada(BaseModel):

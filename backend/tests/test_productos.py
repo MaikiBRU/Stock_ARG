@@ -125,6 +125,57 @@ def test_el_costo_tampoco_se_filtra_en_el_listado(client, sesiones):
     assert cuerpo["items"][0]["precio_costo"] is None
 
 
+def test_el_encargado_edita_sin_borrar_el_costo(client, sesiones, db):
+    """No lo ve, asi que no lo manda: el costo guardado se conserva."""
+    producto = _producto(client, sesiones["propietario"])
+
+    respuesta = client.put(
+        f"/productos/{producto['id']}",
+        json={"nombre": "Alfajor triple XL", "precio_venta": "1300.00"},
+        headers=sesiones["encargado"],
+    )
+
+    assert respuesta.status_code == 200, respuesta.text
+    guardado = db.get(Producto, producto["id"])
+    db.refresh(guardado)
+    assert str(guardado.precio_costo) == "800.00"
+    assert guardado.nombre == "Alfajor triple XL"
+
+
+def test_el_encargado_no_puede_cambiar_el_costo(client, sesiones, db):
+    producto = _producto(client, sesiones["propietario"])
+
+    client.put(
+        f"/productos/{producto['id']}",
+        json={
+            "nombre": "Alfajor triple",
+            "precio_venta": "1200.00",
+            "precio_costo": "1.00",
+        },
+        headers=sesiones["encargado"],
+    )
+
+    guardado = db.get(Producto, producto["id"])
+    db.refresh(guardado)
+    assert str(guardado.precio_costo) == "800.00"
+
+
+def test_el_propietario_si_cambia_el_costo(client, sesiones):
+    producto = _producto(client, sesiones["propietario"])
+
+    cuerpo = client.put(
+        f"/productos/{producto['id']}",
+        json={
+            "nombre": "Alfajor triple",
+            "precio_venta": "1200.00",
+            "precio_costo": "900.00",
+        },
+        headers=sesiones["propietario"],
+    ).json()
+
+    assert cuerpo["precio_costo"] == "900.00"
+
+
 # --- codigo de barras (RF-C02) -------------------------------------------
 
 

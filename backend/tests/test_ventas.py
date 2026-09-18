@@ -1148,3 +1148,41 @@ def test_la_gestion_no_tiene_tope_de_descuento(client, sesiones, mostrador):
 
     assert respuesta.status_code == 201
     assert respuesta.json()["total"] == "1.00"
+
+
+def test_el_historial_trae_los_nombres_para_mostrar(
+    client, sesiones, mostrador
+):
+    """La pantalla muestra nombres, no ids que la obliguen a buscar."""
+    venta = _vender(
+        client,
+        sesiones["vendedor"],
+        [{"id_producto": mostrador["producto"]["id"], "cantidad": 1}],
+        id_medio_pago=mostrador["efectivo"],
+        id_cliente=mostrador["cliente"]["id"],
+    ).json()
+
+    fila = client.get("/ventas", headers=sesiones["propietario"]).json()[
+        "items"
+    ][0]
+    detalle = client.get(
+        f"/ventas/{venta['id']}", headers=sesiones["propietario"]
+    ).json()
+
+    for datos in (venta, fila, detalle):
+        assert datos["medio_pago"] == "Efectivo"
+        assert datos["vendedor"] == "Vendedor"
+        assert datos["cliente"] == "Ana Gomez"
+
+
+def test_una_venta_a_mostrador_no_tiene_nombre_de_cliente(
+    client, sesiones, mostrador
+):
+    venta = _vender(
+        client,
+        sesiones["vendedor"],
+        [{"id_producto": mostrador["producto"]["id"], "cantidad": 1}],
+        id_medio_pago=mostrador["efectivo"],
+    ).json()
+
+    assert venta["cliente"] is None

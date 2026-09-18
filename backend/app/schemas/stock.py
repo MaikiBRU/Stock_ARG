@@ -61,6 +61,9 @@ class MovimientoSalida(BaseModel):
     id_compra: int | None
     id_usuario: int
     fecha_hora: datetime
+    # Nombres para mostrar; los completa la ruta.
+    producto: str | None = None
+    usuario: str | None = None
 
 
 class ResumenStock(BaseModel):
