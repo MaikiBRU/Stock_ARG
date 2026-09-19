@@ -22,8 +22,13 @@ ayer y hoy. StockARG une las cuatro cosas y deja traza de cada movimiento.
 
 ## Demo pública
 
-Cualquiera puede abrir un comercio de prueba, con tres semanas de datos ya
-cargados, que se borra solo a los 45 minutos. El diseño está explicado en
+**[stockarg.aaronbrumat.com.ar](https://stockarg.aaronbrumat.com.ar)**: botón
+"Probar la demo", sin registro.
+
+Cualquiera puede abrir un comercio de prueba, con un mes de ventas ya cargado,
+que se borra solo a los 45 minutos (o a los 20 sin actividad). Desde la franja
+superior se puede cambiar de rol para ver la aplicación como propietario,
+encargado o vendedor. El diseño está explicado en
 [DEMO.md](DEMO.md): cómo se aísla cada visitante de la aplicación real, qué
 cupos tiene y cómo se limpia.
 
