@@ -20,7 +20,11 @@ ESPERA_MAXIMA="${ESPERA_MAXIMA:-90}"
 
 marca="$(date +%Y%m%d-%H%M%S)"
 respaldo="${CARPETA_DE_RESPALDOS}/stockarg-${marca}.sql.gz"
-version_anterior="$(git rev-parse --short HEAD)"
+version_nueva="$(git rev-parse --short HEAD)"
+# La version que esta sirviendo ahora no es la del checkout: el pull ya
+# lo movio. Se guarda aparte en cada despliegue exitoso.
+archivo_de_version="${CARPETA_DE_RESPALDOS}/version-desplegada"
+version_anterior="$(cat "${archivo_de_version}" 2>/dev/null || echo "${version_nueva}")"
 
 echo "==> 1/4 Respaldando ${BASE}"
 mkdir -p "${CARPETA_DE_RESPALDOS}"
@@ -57,7 +61,8 @@ for _ in $(seq 1 "${ESPERA_MAXIMA}"); do
         echo "    la API responde"
         volver_atras
         echo
-        echo "Despliegue terminado. Version anterior: ${version_anterior}"
+        echo "${version_nueva}" >"${archivo_de_version}"
+        echo "Despliegue terminado: ${version_nueva}. Version anterior: ${version_anterior}"
         exit 0
     fi
     if [ "${estado}" = "unhealthy" ]; then
