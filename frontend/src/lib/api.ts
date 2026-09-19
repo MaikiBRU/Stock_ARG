@@ -35,18 +35,18 @@ function leerDetalle(cuerpo: unknown, estado: number): [string | null, string] {
   if (typeof detalle === "string") return [null, detalle];
   if (Array.isArray(detalle)) {
     // Errores de validacion de FastAPI: se muestra el primero.
-    return [null, detalle[0]?.msg ?? "Los datos enviados no son validos."];
+    return [null, detalle[0]?.msg ?? "Los datos enviados no son válidos."];
   }
   if (detalle && typeof detalle === "object") {
     return [
       typeof detalle.codigo === "string" ? detalle.codigo : null,
       typeof detalle.mensaje === "string"
         ? detalle.mensaje
-        : "No se pudo completar la operacion.",
+        : "No se pudo completar la operación.",
     ];
   }
   if (estado >= 500) return [null, "El servidor tuvo un problema."];
-  return [null, "No se pudo completar la operacion."];
+  return [null, "No se pudo completar la operación."];
 }
 
 type Opciones = Omit<RequestInit, "body"> & { cuerpo?: unknown };

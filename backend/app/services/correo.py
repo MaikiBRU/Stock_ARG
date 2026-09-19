@@ -100,9 +100,9 @@ def enviar_codigo_de_verificacion(destinatario: str, codigo: str) -> None:
     """Manda el codigo de alta de cuenta (RF-A01)."""
     _enviar(
         destinatario,
-        "Tu codigo de verificacion de StockARG",
-        f"Tu codigo es {codigo}. Vence en 30 minutos.\n"
-        "Si no creaste una cuenta, ignora este mensaje.",
+        "Tu código de verificación de StockARG",
+        f"Tu código es {codigo}. Vence en 30 minutos.\n"
+        "Si no creaste una cuenta, ignorá este mensaje.",
     )
 
 
@@ -112,8 +112,8 @@ def enviar_enlace_de_recuperacion(destinatario: str, token: str) -> None:
     enlace = f"{ajustes.frontend_url}/restablecer?token={token}"
     _enviar(
         destinatario,
-        "Restablecer tu contrasena de StockARG",
-        f"Para elegir una contrasena nueva entra a:\n{enlace}\n\n"
+        "Restablecer tu contraseña de StockARG",
+        f"Para elegir una contraseña nueva entrá a:\n{enlace}\n\n"
         "El enlace vence en una hora y sirve una sola vez.\n"
-        "Si no pediste esto, ignora el mensaje: tu contrasena no cambio.",
+        "Si no pediste esto, ignorá el mensaje: tu contraseña no cambió.",
     )

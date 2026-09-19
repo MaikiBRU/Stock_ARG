@@ -10,8 +10,8 @@ from app.services.productos import ErrorDeProducto, NoEncontrado
 # porque es el unico que pide importe recibido y calcula vuelto.
 INICIALES = (
     ("Efectivo", True),
-    ("Debito", False),
-    ("Credito", False),
+    ("Débito", False),
+    ("Crédito", False),
     ("Transferencia", False),
     ("QR", False),
 )

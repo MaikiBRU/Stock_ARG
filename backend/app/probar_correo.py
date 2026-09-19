@@ -30,7 +30,7 @@ def main() -> int:
         correo._enviar(
             sys.argv[1],
             "Prueba de correo de StockARG",
-            "Si lees esto, el envio de correo de StockARG funciona.",
+            "Si leés esto, el envío de correo de StockARG funciona.",
         )
     except correo.ErrorDeEnvio as error:
         causa = type(error.__cause__).__name__ if error.__cause__ else ""

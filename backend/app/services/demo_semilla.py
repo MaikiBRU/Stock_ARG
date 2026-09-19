@@ -61,27 +61,27 @@ PESOS_DE_CAJA = (10, 30, 60)
 
 PESOS_DE_MEDIOS = {
     "Efectivo": 40,
-    "Debito": 25,
+    "Débito": 25,
     "QR": 15,
     "Transferencia": 12,
-    "Credito": 8,
+    "Crédito": 8,
 }
 
 CATEGORIAS = {
     "bebidas": ("Bebidas", "Gaseosas, aguas, jugos y energizantes."),
     "golosinas": ("Golosinas", "Alfajores, chocolates y caramelos."),
     "snacks": ("Snacks", "Papas, palitos y frutos secos."),
-    "almacen": ("Almacen", "Productos secos de consumo diario."),
-    "lacteos": ("Lacteos", "Refrigerados de vencimiento corto."),
-    "panaderia": ("Panaderia", "Pan y facturas del dia."),
-    "limpieza": ("Limpieza", "Articulos de limpieza del hogar."),
+    "almacen": ("Almacén", "Productos secos de consumo diario."),
+    "lacteos": ("Lácteos", "Refrigerados de vencimiento corto."),
+    "panaderia": ("Panadería", "Pan y facturas del día."),
+    "limpieza": ("Limpieza", "Artículos de limpieza del hogar."),
 }
 
 PROVEEDORES = {
-    "bebidas": "Bebidas Rio Sur Mayorista",
+    "bebidas": "Bebidas Río Sur Mayorista",
     "golosinas": "Golosinas del Centro",
     "almacen": "Distribuidora La Esquina",
-    "lacteos": "Lacteos La Pradera",
+    "lacteos": "Lácteos La Pradera",
     "panaderia": "Panificadora El Horno",
     "limpieza": "Limpieza Integral Mayorista",
 }
@@ -89,20 +89,20 @@ PROVEEDORES = {
 PROVEEDOR_DEL_RUBRO = {"snacks": "golosinas"}
 
 CLIENTES = (
-    ("Lucia", "Fernandez"),
-    ("Martin", "Gomez"),
-    ("Sofia", "Rodriguez"),
-    ("Joaquin", "Lopez"),
-    ("Valentina", "Diaz"),
-    ("Tomas", "Martinez"),
-    ("Micaela", "Perez"),
-    ("Nicolas", "Romero"),
+    ("Lucía", "Fernández"),
+    ("Martín", "Gómez"),
+    ("Sofía", "Rodríguez"),
+    ("Joaquín", "López"),
+    ("Valentina", "Díaz"),
+    ("Tomás", "Martínez"),
+    ("Micaela", "Pérez"),
+    ("Nicolás", "Romero"),
     ("Agustina", "Sosa"),
-    ("Facundo", "Alvarez"),
+    ("Facundo", "Álvarez"),
     ("Florencia", "Torres"),
     ("Bruno", "Ruiz"),
 )
-LOCALIDADES = ("Rosario", "Funes", "Villa Gobernador Galvez")
+LOCALIDADES = ("Rosario", "Funes", "Villa Gobernador Gálvez")
 
 
 @dataclass(frozen=True)
@@ -124,7 +124,7 @@ class Articulo:
 CATALOGO = (
     Articulo("bebidas", "Gaseosa cola 500 ml", 1500, 72, 24, popularidad=9),
     Articulo(
-        "bebidas", "Gaseosa lima limon 500 ml", 1400, 48, 18, popularidad=5
+        "bebidas", "Gaseosa lima limón 500 ml", 1400, 48, 18, popularidad=5
     ),
     Articulo("bebidas", "Agua mineral 500 ml", 900, 60, 24, popularidad=8),
     Articulo("bebidas", "Agua saborizada 500 ml", 1200, 36, 12, popularidad=5),
@@ -142,13 +142,13 @@ CATALOGO = (
     Articulo("golosinas", "Chicles de menta", 600, 40, 15, popularidad=5),
     Articulo("golosinas", "Barra de cereal", 800, 30, 12, popularidad=4),
     Articulo(
-        "golosinas", "Turron de mani", 500, 10, 15, popularidad=4, reponer=False
+        "golosinas", "Turrón de maní", 500, 10, 15, popularidad=4, reponer=False
     ),
     Articulo("snacks", "Papas fritas 150 g", 2800, 24, 8, popularidad=5),
     Articulo("snacks", "Palitos salados 100 g", 1500, 20, 8),
-    Articulo("snacks", "Mani salado 200 g", 1700, 18, 6),
+    Articulo("snacks", "Maní salado 200 g", 1700, 18, 6),
     Articulo("almacen", "Yerba mate 500 g", 3200, 20, 8, popularidad=5),
-    Articulo("almacen", "Azucar 1 kg", 1500, 15, 6),
+    Articulo("almacen", "Azúcar 1 kg", 1500, 15, 6),
     Articulo("almacen", "Fideos secos 500 g", 1400, 18, 6),
     Articulo("almacen", "Arroz 1 kg", 1900, 12, 6, popularidad=2),
     Articulo(
@@ -183,13 +183,13 @@ CATALOGO = (
         "panaderia", "Medialunas x 6", 3000, 10, 4, vence_en=-1, popularidad=4
     ),
     Articulo(
-        "panaderia", "Budin de vainilla", 1900, 9, 4, vence_en=15, popularidad=2
+        "panaderia", "Budín de vainilla", 1900, 9, 4, vence_en=15, popularidad=2
     ),
     Articulo("limpieza", "Lavandina 1 L", 1300, 14, 5, popularidad=2),
     Articulo("limpieza", "Detergente 500 ml", 1600, 12, 5, popularidad=2),
     Articulo(
         "limpieza",
-        "Papel higienico x 4",
+        "Papel higiénico x 4",
         2900,
         8,
         6,
