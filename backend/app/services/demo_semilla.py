@@ -37,10 +37,13 @@ from app.services import productos as servicio_productos
 from app.services import proveedores as servicio_proveedores
 from app.services import ventas as servicio_ventas
 
-DIAS_DE_HISTORIA = 21
+# Mas de un mes: el reporte mensual queda lleno de dias con ventas, y
+# la carga inicial del local cae fuera de el, asi el gasto en compras
+# del mes muestra reposiciones y no el surtido completo del estante.
+DIAS_DE_HISTORIA = 31
 # Dias, contados hacia atras desde hoy, en que entra mercaderia. El
-# primero es la carga inicial del local.
-DIAS_DE_REPOSICION = (DIAS_DE_HISTORIA - 1, 14, 7, 2)
+# primero es la carga inicial del local; despues, una vez por semana.
+DIAS_DE_REPOSICION = (DIAS_DE_HISTORIA - 1, 21, 14, 7, 2)
 CENTAVO = Decimal("0.01")
 
 # Horarios del comercio, en su propia zona: abre de 8 a 21 y la
