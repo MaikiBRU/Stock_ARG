@@ -1,0 +1,7 @@
+# Los scripts corren en Linux: con fin de linea de Windows, bash falla
+# con "$'\r': command not found". Se fijan en LF sin importar el sistema.
+*.sh text eol=lf
+Dockerfile text eol=lf
+*.ico binary
+*.png binary
+*.webp binary
