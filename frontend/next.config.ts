@@ -20,6 +20,20 @@ const encabezados = [
   },
 ];
 
+// Un build de produccion que apunte a la API local quedaria publicado
+// sin poder hablar con nada. Pasa si un .env.local (que Next prioriza
+// sobre .env.production) trae la URL de desarrollo: se corta el build.
+const api = process.env.NEXT_PUBLIC_API_URL ?? "";
+if (
+  process.env.NODE_ENV === "production" &&
+  /localhost|127\.0\.0\.1/.test(api)
+) {
+  throw new Error(
+    `NEXT_PUBLIC_API_URL apunta a ${api} en un build de produccion. ` +
+      "La configuracion local va en .env.development.local.",
+  );
+}
+
 const nextConfig: NextConfig = {
   // Sin esto, el modo desarrollo escribe AGENTS.md y CLAUDE.md en cada
   // arranque; no son parte del proyecto.
