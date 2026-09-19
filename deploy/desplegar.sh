@@ -11,10 +11,10 @@
 
 set -euo pipefail
 
-CONTENEDOR_DE_LA_BASE="${CONTENEDOR_DE_LA_BASE:-postgres}"
+CONTENEDOR_DE_LA_BASE="${CONTENEDOR_DE_LA_BASE:-data-center-db-1}"
 BASE="${BASE:-stockarg}"
 USUARIO_DE_LA_BASE="${USUARIO_DE_LA_BASE:-stockarg}"
-CARPETA_DE_RESPALDOS="${CARPETA_DE_RESPALDOS:-/var/backups/stockarg}"
+CARPETA_DE_RESPALDOS="${CARPETA_DE_RESPALDOS:-${HOME}/backups/stockarg}"
 COMPOSE="deploy/docker-compose.prod.yml"
 ESPERA_MAXIMA="${ESPERA_MAXIMA:-90}"
 

@@ -31,15 +31,17 @@ def ip_del_cliente(request: Request) -> str | None:
     """Direccion de quien llama, mirando primero el proxy.
 
     Detras de Caddy, request.client.host es siempre el proxy. Se toma la
-    primera entrada de X-Forwarded-For, que es la que agrega el proxy de
-    confianza. Se usa unicamente para contar intentos, nunca para
-    autorizar: una cabecera la escribe cualquiera.
+    ultima entrada de X-Forwarded-For, que es la que agrega el proxy de
+    confianza: las anteriores las puede escribir el propio cliente, y
+    tomarlas dejaria inventar una IP distinta en cada intento para
+    esquivar los limites. Se usa unicamente para contar intentos, nunca
+    para autorizar.
     """
     reenviada = request.headers.get("X-Forwarded-For")
     if reenviada:
-        primera = reenviada.split(",")[0].strip()
-        if primera:
-            return primera
+        ultima = reenviada.split(",")[-1].strip()
+        if ultima:
+            return ultima
     return request.client.host if request.client else None
 
 

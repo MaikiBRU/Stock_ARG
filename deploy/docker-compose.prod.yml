@@ -1,8 +1,9 @@
 # Despliegue de la API en el servidor.
 #
-# La base es el PostgreSQL que ya corre ahi y el TLS lo termina Caddy:
-# este compose agrega solamente la API, en la misma red que el proxy.
-# El puerto no se publica al host: a la API se llega por Caddy.
+# El servidor ya corre Caddy (como servicio del sistema, no en docker) y
+# un PostgreSQL en docker de otro proyecto. Este compose agrega solamente
+# la API: publica el puerto en 127.0.0.1, donde solo llega Caddy, y se
+# une a la red de la base para usar su propia base "stockarg".
 
 services:
   api:
@@ -12,11 +13,14 @@ services:
     container_name: stockarg-api
     restart: unless-stopped
     env_file: ../backend/.env
-    expose:
-      - "8000"
+    ports:
+      # Nunca 0.0.0.0: la API no queda expuesta sin pasar por Caddy.
+      - "127.0.0.1:${PUERTO_LOCAL:-8002}:8000"
     networks:
-      - proxy
       - datos
+    # El host tiene 1 GB y lo comparte: un tope evita que un pico de la
+    # API deje sin memoria a los otros proyectos.
+    mem_limit: 320m
     healthcheck:
       # El contenedor no trae curl. Python ya esta adentro.
       test:
@@ -32,12 +36,8 @@ services:
       start_period: 30s
 
 networks:
-  # Las dos redes ya existen en el servidor: la del proxy y la de la
-  # base. Los nombres se pasan por entorno para no fijar aca los del
-  # otro proyecto que comparte el host.
-  proxy:
-    external: true
-    name: ${RED_DEL_PROXY:-caddy}
+  # La red donde vive el PostgreSQL del servidor. El nombre se pasa por
+  # entorno para no fijar aca el del otro proyecto.
   datos:
     external: true
-    name: ${RED_DE_LA_BASE:-datos}
+    name: ${RED_DE_LA_BASE:-data-center_default}

@@ -1,28 +1,41 @@
 # Despliegue
 
-La API corre en un servidor propio, detrás de Caddy, junto a otro proyecto que
-ya usa ese host. El frontend va aparte, en Cloudflare Workers.
+La API corre en la EC2 de us-east-2 (Ubuntu, 1 GB), que comparte con Data
+Center y BarberApp. El frontend va aparte, en Cloudflare Workers.
 
 ```
-navegador -> Caddy (TLS) -> contenedor stockarg-api -> PostgreSQL del servidor
+navegador -> Caddy (systemd, TLS) -> 127.0.0.1:8002 -> contenedor stockarg-api
+                                                          |
+                                     red data-center_default
+                                                          v
+                               data-center-db-1 (PostgreSQL 16), base "stockarg"
 ```
+
+StockARG usa su propia base y su propio usuario dentro del PostgreSQL que ya
+corre en el servidor: las tablas de Data Center no se tocan, y no se paga la
+memoria de una segunda instancia.
 
 ## Lo que tiene que existir en el servidor
 
-- Docker con el plugin de compose.
-- Caddy corriendo en una red de docker, con el fragmento de
-  [deploy/Caddyfile.fragmento](deploy/Caddyfile.fragmento) incluido en su
-  Caddyfile.
-- PostgreSQL con una base **propia de StockARG**, separada de la del otro
-  proyecto:
+- Docker con el plugin de compose, y Caddy como servicio del sistema.
+- El repositorio en `~/stockarg`.
+- La base y el usuario de StockARG (una sola vez; `app` es el superusuario de
+  ese PostgreSQL):
 
   ```bash
-  docker exec -it postgres psql -U postgres \
-    -c "CREATE USER stockarg WITH PASSWORD '<clave>'" \
-    -c "CREATE DATABASE stockarg OWNER stockarg"
+  docker exec -i data-center-db-1 psql -U app -d postgres     -c "CREATE ROLE stockarg LOGIN PASSWORD '<clave>'"     -c "CREATE DATABASE stockarg OWNER stockarg"
   ```
 
-- El DNS de `api-stockarg.aaronbrumat.com.ar` apuntando al servidor.
+- El bloque de [deploy/Caddyfile.fragmento](deploy/Caddyfile.fragmento) al final
+  de `/etc/caddy/Caddyfile`, validado y recargado:
+
+  ```bash
+  sudo caddy validate --config /etc/caddy/Caddyfile
+  sudo systemctl reload caddy
+  ```
+
+- En Cloudflare, un registro `A` `api-stockarg` a la IP del servidor, **sin
+  proxy** (nube gris): el certificado lo saca Caddy.
 
 ## Configuración
 
@@ -33,7 +46,7 @@ navegador -> Caddy (TLS) -> contenedor stockarg-api -> PostgreSQL del servidor
 | ------------------------ | -------------------------------------------------------------- |
 | `ENVIRONMENT`            | `production`                                                    |
 | `SECRET_KEY`             | 48 bytes al azar, distinta de la de desarrollo                   |
-| `DATABASE_URL`           | `postgresql+psycopg://stockarg:<clave>@postgres:5432/stockarg`   |
+| `DATABASE_URL`           | `postgresql+psycopg://stockarg:<clave>@data-center-db-1:5432/stockarg` |
 | `ALLOWED_ORIGINS`        | `https://stockarg.aaronbrumat.com.ar`                            |
 | `FRONTEND_URL`           | `https://stockarg.aaronbrumat.com.ar`                            |
 | `DEMO_MAINTENANCE_TOKEN` | otro valor al azar, si se quiere limpiar desde afuera            |
@@ -64,9 +77,8 @@ docker compose -f deploy/docker-compose.prod.yml exec api python -m app.probar_c
 Cambiar de proveedor (Cloudflare Email Service, Brevo) es cambiar estas
 variables: el código no depende de ninguno.
 
-Las redes de docker se toman del entorno: `RED_DEL_PROXY` (la de Caddy) y
-`RED_DE_LA_BASE` (la de PostgreSQL). Si en el servidor se llaman distinto, hay
-que exportarlas antes de desplegar.
+La red de la base se toma de `RED_DE_LA_BASE` (por defecto
+`data-center_default`) y el puerto local de `PUERTO_LOCAL` (por defecto 8002).
 
 ## Desplegar
 
@@ -77,7 +89,7 @@ git pull
 
 El script, en orden:
 
-1. respalda la base con `pg_dump` en `/var/backups/stockarg`;
+1. respalda la base con `pg_dump` en `~/backups/stockarg`;
 2. imprime el comando exacto para volver atrás, con la versión anterior y el
    archivo de respaldo;
 3. construye la imagen y levanta la versión nueva;
@@ -97,8 +109,8 @@ docker compose -f deploy/docker-compose.prod.yml up -d --build
 Y, solo si hubo que revertir un cambio de esquema:
 
 ```bash
-gunzip -c /var/backups/stockarg/stockarg-<marca>.sql.gz \
-  | docker exec -i postgres psql -U stockarg -d stockarg
+gunzip -c ~/backups/stockarg/stockarg-<marca>.sql.gz \
+  | docker exec -i data-center-db-1 psql -U stockarg -d stockarg
 ```
 
 ## Después de desplegar
